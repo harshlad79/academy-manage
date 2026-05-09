@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "taskAreas": {
+    "core": { "description": "Authentication, MongoDB/Better-Auth setup, Global Layout, Navigation", "priority": 1 },
+    "students": { "description": "Student CRUD, profile management, and smart search", "priority": 2 },
+    "courses": { "description": "Class creation, teacher assignment, assignments, and grades", "priority": 3 },
+    "payments": { "description": "Billing cycles, payment tracking, and debt management", "priority": 4 },
+    "attendance": { "description": "Attendance tracking, calendar visualization, and statistics", "priority": 5 }
+  },
+  "automation": {
+    "mode": "auto",
+    "review": "none"
+  },
+  "git": {
+    "branchingStrategy": "feature-based"
+  }
+}
