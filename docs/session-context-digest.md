@@ -7,6 +7,7 @@
 ## 스택·목업
 
 - SvelteKit 5, Tailwind, TS strict, Mongo + Mongoose, Better Auth.
+- **`AUTH_MODE=mock`**: 세션만 고정 사용자로 대체. **DB 없이 쿠키만으로 업무 데이터를 대체하지 않음** — 데모·시연도 **`DB_URL` MongoDB 가동 + `npm run seed` 권장**.
 - 학원 스코프: **`withAcademyScope()`** — `active_academy_id` httpOnly 쿠키(멤버십 검증) + `DEV_ACADEMY_ID` 폴백.
 - Mock 사용자: `AUTH_MOCK_USER_ID` → `testuser` / `parent-kim` / **`superadmin`(플랫폼·시드 후)**.
 

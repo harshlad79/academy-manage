@@ -22,6 +22,15 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-13 — 문서 동기화: mock·MongoDB·서브 caveman 명문화
+
+- **맥락**: 사용자 확인 — 대화 말미 합의(`AUTH_MODE=mock` 은 세션만 우회·업무 데이터는 MongoDB 필수, caveman은 서브 브리프용)가 **핸드오프·다이제스트·AGENTS**와 논리적으로 맞는지.
+- **추론한 결정**:
+  - **`session-handoff-and-status.md` §0·§3**, **`session-context-digest.md`**, **`.env.example` 주석**: mock 이어도 **`DB_URL` MongoDB 가동** 필요를 명문화.
+  - **`AGENTS.md`**, **`multi-agent.md`**: caveman은 **서브 전달용**; 사용자 대화 톤과 혼동 금지.
+  - **`session-handoff` §4** 후속: 다학원 일부 구현 반영, 잔여를 이메일 초대 등으로 구체화.
+- **검증**: 문서 일관성만; 빌드 불필요.
+
 ### 2026-05-13 — 비활성 스태프 레이아웃 가드·live 멤버 userId 검증
 
 - **맥락**: 사용자 요청 — 완성도·데모·안전.

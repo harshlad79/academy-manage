@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-12 — **`BankDeposit`** 수기 입금·동액 청구 매칭(`/payments`), **`/reports/course-revenue`** 클래스 정산(월 수납+미납), `/p` 납부 이력, `seoulMonthRange` 등. 이전: 2026-05-11 학부모 `/p` 미납·출결·시드; `Payment`·`/makeups` 등.
+**최근 동기화**: 2026-05-13 — **비활성 학원**에서 일반 스태프 레이아웃 **`403`**(`+layout.server.ts`·`locals.academyOperationalStatus`), **`live`** 모드 플랫폼 멤버 추가 시 **`liveBetterAuthUserExists`**. 직전: 2026-05-12 `BankDeposit`·`/reports/course-revenue`·`/p` 납부 등; 2026-05-11 데모 **2학원 시드**(`DEV_ACADEMY_SECOND_ID`)·학부모 `/p` 등.
 
 ### 프로젝트·스택
 
@@ -83,8 +83,9 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 
 - SvelteKit(Svelte 5), Tailwind 4, TypeScript
 - MongoDB + Mongoose, Better Auth
-- **`AUTH_MODE=mock`** 또는 **`live`** (`src/hooks.server.ts`)
-- 선택: mock 시 **`AUTH_MOCK_USER_ID`**(`testuser` 기본값, 예: `parent-kim`)
+- **`AUTH_MODE=mock`** 은 **로그인·세션 검증만** 우회한다. **학원·수강·수납 등 업무 데이터는 전부 MongoDB**이므로, **목업 데모·모의 시연에서도 `DB_URL` 대상 MongoDB가 로컬·원격 가리지 않고 실행 중**이어야 한다(`connectDB()`·Mongoose 쿼리).
+- **`AUTH_MODE=live`**: Better Auth 실경로 + 동일 DB 스택.
+- mock 시 선택: **`AUTH_MOCK_USER_ID`**(`testuser` 기본값, 예: `parent-kim`, 플랫폼 확인 시 `superadmin`)
 - 검증: `npm run check` → `npm test` → `npm run lint` → `npm run build`
 
 ---
@@ -104,7 +105,7 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 | 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`** — `Academy` 목록 조회(1단계) |
 | 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`      |
 
-**후속(PR드 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 다학원 등.
+**후속(PR드 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 플랫폼 멤버 **이메일 초대** 등 다학원·연동 잔여.
 
 ## 5. 핵심 파일
 
