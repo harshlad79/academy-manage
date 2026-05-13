@@ -39,7 +39,7 @@ npm run build
 
 **목표(한 줄):** `<예: src/routes/payments에서 환불 상태 전이만 추가>`
 
-(선택) caveman 본문 — 짧게: 동사·경로·금지만. 군더더기·정중어 생략 가능.
+(선택) caveman 본문 — 짧게: 동사·경로·금지만. 군더더기·정중어 생략 가능. **커밋·병렬 서브 규칙**은 루트 [AGENTS.md](../AGENTS.md) 를 따른다.
 
 ```[CRITICAL]
 - 허용·수정 경로: (글머리 원문 그대로)
@@ -54,7 +54,7 @@ npm run build
 
 | 문서                                                           | 용도                    |
 | -------------------------------------------------------------- | ----------------------- |
-| [AGENT.md](../AGENT.md) (루트)                                 | Git·서브·CLI 기본 원칙  |
+| [AGENTS.md](../AGENTS.md) (루트)                               | Git·서브·CLI 기본 원칙  |
 | [multi-agent-lessons.md](multi-agent-lessons.md)               | 이슈 히스토리·회피 팁   |
 | [session-context-digest.md](session-context-digest.md)         | 신규 대화용 초소형 맥락 |
 | [session-handoff-and-status.md](session-handoff-and-status.md) | 상세 핸드오프           |

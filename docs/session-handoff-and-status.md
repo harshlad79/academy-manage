@@ -65,16 +65,17 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 2. **[inferred-decisions-log.md](inferred-decisions-log.md)** 최신 항목을 확인한다.
 3. `git status` 등으로 브랜치·변경 목록을 본다.
 4. **[PRD.md](PRD.md)** 로 범위를 교차 검증한다.
-5. **`.pi/taskplane-config.json`**, **`.env.example`** 등 환경·작업 설정을 필요 시 확인한다.
+5. **`.pi/taskplane-config.json`**, **`.env.example`**, 루트 **[AGENTS.md](../AGENTS.md)** 등 환경·작업 설정을 필요 시 확인한다.
 
 ---
 
 ## 2. 참고 문서
 
-| 구분      | 링크                                                                                                         |
-| --------- | ------------------------------------------------------------------------------------------------------------ |
-| GSD 순서  | [agent-skills-and-gsd-workflow-order.md](agent-skills-and-gsd-workflow-order.md)                             |
-| 추론·정책 | [inferred-decisions-log.md](inferred-decisions-log.md), [agent-autonomy-policy.md](agent-autonomy-policy.md) |
+| 구분                    | 링크                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 에이전트 운영(Git·서브) | [AGENTS.md](../AGENTS.md) (저장소 루트)                                                                      |
+| GSD 순서                | [agent-skills-and-gsd-workflow-order.md](agent-skills-and-gsd-workflow-order.md)                             |
+| 추론·정책               | [inferred-decisions-log.md](inferred-decisions-log.md), [agent-autonomy-policy.md](agent-autonomy-policy.md) |
 
 ---
 

@@ -4,6 +4,7 @@
 
 에이전트 스킬·GSD 적용 순서(다른 프로젝트 참고용): **[agent-skills-and-gsd-workflow-order.md](agent-skills-and-gsd-workflow-order.md)**.  
 자율 실행·추론 기록: **[agent-autonomy-policy.md](agent-autonomy-policy.md)**, **[inferred-decisions-log.md](inferred-decisions-log.md)**.  
+IDE·CLI 에이전트 **Git·서브·검증** 운영 원칙(루트): **[AGENTS.md](../AGENTS.md)**.  
 **세션 끊김 시 구현·대화 맥락 재개용(PRD와 별도):** **[session-handoff-and-status.md](session-handoff-and-status.md)**.
 
 외부 콘솔·키 발급 등 프로젝트 전용 체크리스트: [개발자가 처리할 항목.md](개발자가-처리할-항목.md).
@@ -158,7 +159,7 @@ MVP 후 Playwright 실계정 플로는 자격 증명을 Secrets로만 보관.
 
 ## 13. 멀티에이전트 분배
 
-절차·파일 경계·검증 순서·이슈 기록: **[multi-agent.md](multi-agent.md)** · [multi-agent-lessons.md](multi-agent-lessons.md).
+절차·파일 경계·검증 순서·이슈 기록: **[multi-agent.md](multi-agent.md)** · [multi-agent-lessons.md](multi-agent-lessons.md). Git·서브·CLI 원칙: 루트 **[AGENTS.md](../AGENTS.md)**.
 
 | 에이전트 | 담당                                                                |
 | -------- | ------------------------------------------------------------------- |
@@ -174,7 +175,7 @@ MVP 후 Playwright 실계정 플로는 자격 증명을 Secrets로만 보관.
 
 병합 전: `npm run check`, `npm run lint`, `npm test`.
 
-**멀티에이전트 운영:** [multi-agent.md](multi-agent.md) · [multi-agent-lessons.md](multi-agent-lessons.md)
+**멀티에이전트 운영:** [multi-agent.md](multi-agent.md) · [multi-agent-lessons.md](multi-agent-lessons.md) · 루트 [AGENTS.md](../AGENTS.md)(Git·서브·검증)
 
 ---
 

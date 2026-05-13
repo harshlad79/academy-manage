@@ -5,6 +5,7 @@ PRD [§13 멀티에이전트 분배](PRD.md)처럼 도메인을 나눌 때, 과�
 
 ## 빠른 링크
 
+- **Git·서브·검증 원칙(루트):** [AGENTS.md](../AGENTS.md)
 - **절차·트랙 분할**: [`multi-agent.md`](multi-agent.md)
 - **실수 히스토리**: 아래 이슈 기록
 

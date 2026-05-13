@@ -2,7 +2,7 @@
 
 > **새 대화 시작 시 이 파일만 `@`로 붙이고** 이어가면 토큰을 크게 줄일 수 있다.  
 > 상세·규칙: [`session-handoff-and-status.md`](session-handoff-and-status.md), [`inferred-decisions-log.md`](inferred-decisions-log.md), [`PRD.md`](PRD.md).  
-> 에이전트 기본 원칙: [AGENT.md](../AGENT.md). 멀티에이전트: [멀티에이전트 작업 가이드](multi-agent.md) · [실수 방지 히스토리](multi-agent-lessons.md).
+> 에이전트 기본 원칙: [AGENTS.md](../AGENTS.md). 멀티에이전트: [멀티에이전트 작업 가이드](multi-agent.md) · [실수 방지 히스토리](multi-agent-lessons.md).
 
 ## 스택·목업
 

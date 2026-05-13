@@ -23,6 +23,6 @@ IDE·Cursor CLI 에이전트가 이 저장소에서 작업할 때의 **기본 �
 
 - `git commit` / `git add` / `git status` / `git diff` 등이 `~/.cursor/cli-config.json`의 `permissions.allow`에 없으면 에이전트가 커밋하지 못한다. 필요 시 패턴을 추가한다.
 
-## 이름 참고
+## 파일 이름
 
-- Cursor 생태계에서는 `AGENTS.md`(복수) 이름도 흔하다. 이 프로젝트는 **`AGENT.md`** 를 단일 진실 원본으로 쓴다.
+- Cursor 등에서 관례적으로 쓰는 표준 파일명은 **`AGENTS.md`**(복수)이다. 이 저장소의 에이전트 운영 원칙 단일 원본도 **`AGENTS.md`** 로 둔다.
