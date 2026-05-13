@@ -22,6 +22,15 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-13 — 초대 수락으로 `AcademyMembership` 생성
+
+- **맥락**: 다이제스트·핸드오프 후속 — 토큰 수락 시 DB 멤버십 반영.
+- **추론한 결정**:
+  - **`consumeAcademyInviteForLoggedInUser`**(`src/lib/server/invite-consume.ts`): 세션 `user.email` 정규화값과 초대 `email` 일치 필수; live 시 `liveBetterAuthUserExists`; 강사 초대는 `linkedTeacherId` 있을 때만 `assertTeacherLinkValid`; 생성 후 `AcademyInvite` 삭제.
+  - **`assertTeacherLinkValid`** + **`TEACHER_INVITE_PENDING_USER_ID`** 를 **`src/lib/server/teacher-membership-link.ts`** 로 이동해 플랫폼 멤버 `createInvite` 와 공유.
+  - **`/invite/accept`**: `load` 에 `acceptUi`(로그인·이메일 불일치 등); `acceptInvite` 액션 성공 시 **`/`** 로 리다이렉트.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-13 — 핸드오프 §4·§5·README 동기화(초대 MVP 반영)
 
 - **맥락**: §0·다이제스트는 `AcademyInvite`·`/invite/accept` 스텁을 반영했으나 §4 표·후속 문장·핵심 파일 목록·루트 README는 구버전에 가까움.

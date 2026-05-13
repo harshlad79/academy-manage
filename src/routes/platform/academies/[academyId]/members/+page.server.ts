@@ -12,6 +12,10 @@ import {
 } from '$lib/server/models/academy-invite';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { Teacher } from '$lib/server/models/teacher';
+import {
+	assertTeacherLinkValid,
+	TEACHER_INVITE_PENDING_USER_ID
+} from '$lib/server/teacher-membership-link';
 import { ACADEMY_ROLES, ensurePlatformSuperAdmin, type AcademyRole } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -20,32 +24,10 @@ const INVITE_ROLES: InviteRole[] = ACADEMY_ROLES.filter(
 	(r): r is InviteRole => r !== 'super_admin'
 );
 
-const TEACHER_INVITE_EXCLUDE = '__invite_pending__';
-
 function parseAcademyIdParam(academyIdParam: string | undefined): Types.ObjectId | null {
 	const raw = academyIdParam?.trim() ?? '';
 	if (!isOidHex(raw)) return null;
 	return new Types.ObjectId(raw);
-}
-
-async function assertTeacherLinkValid(
-	academyId: Types.ObjectId,
-	teacherOid: Types.ObjectId,
-	excludeUserId: string
-): Promise<{ ok: true } | { ok: false; error: string }> {
-	const t = await Teacher.findOne({ _id: teacherOid, academyId }).select('_id').lean();
-	if (!t) {
-		return { ok: false, error: '해당 학원에 속한 강사(Teacher)가 아닙니다.' };
-	}
-	const dup = await AcademyMembership.exists({
-		academyId,
-		linkedTeacherId: teacherOid,
-		userId: { $ne: excludeUserId }
-	});
-	if (dup) {
-		return { ok: false, error: '이미 다른 계정에 연결된 강사 프로필입니다.' };
-	}
-	return { ok: true };
 }
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
@@ -214,7 +196,7 @@ export const actions: Actions = {
 			const ltRaw = fd.get('linkedTeacherId')?.toString()?.trim() ?? '';
 			if (ltRaw && isOidHex(ltRaw)) {
 				const tid = new Types.ObjectId(ltRaw);
-				const chk = await assertTeacherLinkValid(academyId, tid, TEACHER_INVITE_EXCLUDE);
+				const chk = await assertTeacherLinkValid(academyId, tid, TEACHER_INVITE_PENDING_USER_ID);
 				if (!chk.ok) return fail(400, { error: chk.error });
 				linkedTeacherId = tid;
 			}

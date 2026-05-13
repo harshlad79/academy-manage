@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-13 — 플랫폼 **`AcademyInvite`** 이메일 초대·**`/invite/accept`** 스텁·멤버 페이지 `createInvite`/`revokeInvite`. 직전: 비활성 스태프 **`403`**·`liveBetterAuthUserExists`·2학원 시드 등.
+**최근 동기화**: 2026-05-13 — `/invite/accept` **로그인·이메일 일치 시** `POST acceptInvite`로 **`AcademyMembership` 생성·초대 삭제**; 강사 링크 검증 **`teacher-membership-link`** 공유. 직전: **`AcademyInvite`** 스텁·멤버 `createInvite`/`revokeInvite`·비활성 스태프 **`403`** 등.
 
 ### 프로젝트·스택
 
@@ -92,24 +92,24 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 
 ## 4. MVP 구현 대응표(요약)
 
-| 영역                  | 경로·비고                                                                                                                                                                                                   |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 레이아웃·내비         | `Navigation.svelte`, 역할별 링크, `$app/paths` `resolve`                                                                                                                                                    |
-| 인증·RBAC             | `hooks.server.ts`, `auth.ts`, `AcademyMembership`, `rbac.ts`                                                                                                                                                |
-| 학생·강사·클래스 CRUD | `/students`, `/teachers`, `/courses`                                                                                                                                                                        |
-| 수강                  | `/enrollments` (중복 삭제 시 연쇄 정리 포함)                                                                                                                                                                |
-| 출결·감사 로그        | `/attendance`, `AttendanceAuditLog`                                                                                                                                                                         |
-| 보강                  | `/makeups`                                                                                                                                                                                                  |
-| 청구·수납             | `/payments`, `InvoiceLine`, `Payment`, **`BankDeposit`(입금 줄)**                                                                                                                                           |
-| 클래스 정산           | **`/reports`** → **`/reports/course-revenue`** — 월별 수납·미납 집계                                                                                                                                        |
-| 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`**, **`/platform/academies/[id]/members`** — `Academy`·멤버·**`AcademyInvite`** 생성·철회, 공개 **`/invite/accept`**(토큰·만료 안내 스텁; 수락 시 자동 멤버십 없음) |
-| 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                          |
+| 영역                  | 경로·비고                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 레이아웃·내비         | `Navigation.svelte`, 역할별 링크, `$app/paths` `resolve`                                                                                                                                                                |
+| 인증·RBAC             | `hooks.server.ts`, `auth.ts`, `AcademyMembership`, `rbac.ts`                                                                                                                                                            |
+| 학생·강사·클래스 CRUD | `/students`, `/teachers`, `/courses`                                                                                                                                                                                    |
+| 수강                  | `/enrollments` (중복 삭제 시 연쇄 정리 포함)                                                                                                                                                                            |
+| 출결·감사 로그        | `/attendance`, `AttendanceAuditLog`                                                                                                                                                                                     |
+| 보강                  | `/makeups`                                                                                                                                                                                                              |
+| 청구·수납             | `/payments`, `InvoiceLine`, `Payment`, **`BankDeposit`(입금 줄)**                                                                                                                                                       |
+| 클래스 정산           | **`/reports`** → **`/reports/course-revenue`** — 월별 수납·미납 집계                                                                                                                                                    |
+| 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`**, **`/platform/academies/[id]/members`** — `Academy`·멤버·**`AcademyInvite`** 생성·철회, **`/invite/accept?token=`** 로그인·이메일 일치 시 **수락으로 멤버십 생성·초대 삭제** |
+| 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                                      |
 
-**후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 초대 **이메일 발송(SMTP 등)**, 수락 플로에서 **Better Auth 가입·`AcademyMembership` 자동 반영**, 다학원·연동 잔여.
+**후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 초대 **이메일 발송(SMTP 등)**, 수락 전용 **가입(회원가입) 플로**와의 딥링크, 다학원·연동 잔여.
 
 ## 5. 핵심 파일
 
-`src/lib/server/models/{academy,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**`
+`src/lib/server/models/{academy,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `invite-consume.ts`, `teacher-membership-link.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**`
 
 ---
 

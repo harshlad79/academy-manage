@@ -1,10 +1,18 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+	type FormFlash = { error?: string };
+
+	let { data, form }: { data: PageData; form?: FormFlash } = $props();
 </script>
 
 <section class="mx-auto max-w-lg px-4 py-16">
+	{#if form?.error}
+		<p class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+			{form.error}
+		</p>
+	{/if}
+
 	{#if data.kind === 'missing'}
 		<h1 class="text-xl font-semibold text-gray-900">초대 링크가 없습니다</h1>
 		<p class="mt-2 text-sm text-gray-600">
@@ -12,7 +20,7 @@
 		</p>
 	{:else if data.kind === 'invalid'}
 		<h1 class="text-xl font-semibold text-gray-900">유효하지 않은 초대</h1>
-		<p class="mt-2 text-sm text-gray-600">링크가 잘못되었거나 이미 철회되었습니다.</p>
+		<p class="mt-2 text-sm text-gray-600">링크가 잘못되었거나 이미 철회·수락되었습니다.</p>
 	{:else if data.kind === 'expired'}
 		<h1 class="text-xl font-semibold text-gray-900">만료된 초대</h1>
 		<p class="mt-2 text-sm text-gray-600">
@@ -28,11 +36,43 @@
 			<li>초대 이메일: <span class="font-mono">{data.email}</span></li>
 			<li>부여 예정 역할: <span class="font-mono">{data.role}</span></li>
 		</ul>
-		<p class="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-			<strong>MVP 안내:</strong> 여기서 계정이 자동 생성되지는 않습니다. Better Auth로 가입한 뒤,
-			플랫폼 관리자가 동일 학원에
-			<code class="mx-0.5 font-mono text-xs">user.id</code>로 멤버십을 추가하는 흐름과 동일하게 후속
-			연동할 수 있습니다.
-		</p>
+
+		{#if data.acceptUi === 'need_login'}
+			<p
+				class="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+			>
+				<strong>로그인 필요:</strong> 이 초대를 수락하려면 초대된 이메일과 동일한 계정으로 로그인한 뒤
+				이 페이지를 다시 여세요.
+			</p>
+			<p class="mt-2 text-xs text-gray-500">
+				목업(<code class="font-mono">AUTH_MODE=mock</code>)에서는
+				<code class="font-mono">AUTH_MOCK_USER_ID</code>에 해당하는 프로필 이메일이 초대와 같아야
+				합니다.
+			</p>
+		{:else if data.acceptUi === 'no_session_email'}
+			<p class="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+				현재 세션 계정에 이메일이 없어 초대를 검증할 수 없습니다. 관리자에게 문의하세요.
+			</p>
+		{:else if data.acceptUi === 'email_mismatch'}
+			<p
+				class="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+			>
+				<strong>이메일 불일치:</strong> 이 초대는 <span class="font-mono">{data.email}</span>로
+				발급되었습니다. 초대와 같은 이메일의 계정으로 로그인한 뒤 다시 시도하세요.
+			</p>
+		{:else}
+			<form method="POST" action="?/acceptInvite" class="mt-8 space-y-4">
+				<input type="hidden" name="token" value={data.token} />
+				<p class="text-sm text-gray-700">
+					아래 버튼을 누르면 이 학원에 멤버십이 생성되고 초대 링크는 더 이상 사용할 수 없습니다.
+				</p>
+				<button
+					type="submit"
+					class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+				>
+					초대 수락 · 멤버십 생성
+				</button>
+			</form>
+		{/if}
 	{/if}
 </section>
