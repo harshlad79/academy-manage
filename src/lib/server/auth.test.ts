@@ -1,11 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
-import { auth } from './auth';
+import { describe, it, expect } from 'vitest';
+import { getAuth, isMockAuthMode, liveBetterAuthUserExists } from './auth';
 
 describe('Auth Toggle', () => {
-  it('should return mock user when in mock mode', async () => {
-    // In our setup, AUTH_MODE is set to 'mock' in .env, 
-    // which is loaded by the environment.
-    const session = await auth.getSession();
-    expect(session.data.user.name).toBe('Mock User');
-  });
+	it('mock 모드에서 고정 테스트 사용자를 반환한다', async () => {
+		expect(isMockAuthMode()).toBe(true);
+		const session = await getAuth().api.getSession({ headers: new Headers() });
+		expect(session?.user?.name).toBe('테스트 사용자');
+		expect(session?.user?.id).toBe('testuser');
+	});
+
+	it('mock 모드에서 liveBetterAuthUserExists 는 항상 true', async () => {
+		expect(await liveBetterAuthUserExists('any-id')).toBe(true);
+	});
 });

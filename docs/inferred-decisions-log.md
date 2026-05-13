@@ -22,6 +22,15 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-13 — 비활성 스태프 레이아웃 가드·live 멤버 userId 검증
+
+- **맥락**: 사용자 요청 — 완성도·데모·안전.
+- **추론한 결정**:
+  - **`ResolvedAcademyContext.academyOperationalStatus`**: `hooks` 가 `locals.academyOperationalStatus` 에 설정.
+  - **`+layout.server.ts`**: `/p` 제외 스태프 경로에서 **비활성 학원**이고 역할이 **`super_admin` 이 아니면** `403` (내비에서 활성 학원으로 전환 안내).
+  - **`liveBetterAuthUserExists`**: `AUTH_MODE=live` 일 때 플랫폼 `addMember` 가 Better Auth `academy-db.user` 에 `id`/`userId` 존재 여부 확인. mock 은 스킵(true).
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-11 — 데모용 시드 2학원(분원)·환경 변수
 
 - **맥락**: 사용자「데모가 급해」— 다학원 전환 UI를 시연 가능하게.

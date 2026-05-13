@@ -1,17 +1,41 @@
 {
-  "version": "1.0",
-  "taskAreas": {
-    "core": { "description": "Authentication, MongoDB/Better-Auth setup, Global Layout, Navigation", "priority": 1 },
-    "students": { "description": "Student CRUD, profile management, and smart search", "priority": 2 },
-    "courses": { "description": "Class creation, teacher assignment, assignments, and grades", "priority": 3 },
-    "payments": { "description": "Billing cycles, payment tracking, and debt management", "priority": 4 },
-    "attendance": { "description": "Attendance tracking, calendar visualization, and statistics", "priority": 5 }
-  },
-  "automation": {
-    "mode": "auto",
-    "review": "none"
-  },
-  "git": {
-    "branchingStrategy": "feature-based"
-  }
+	"configVersion": 1,
+	"version": "1.0",
+	"taskAreas": {
+		"core": {
+			"description": "Authentication, MongoDB/Better-Auth setup, Global Layout, Navigation",
+			"priority": 1
+		},
+		"students": {
+			"description": "Student CRUD, profile management, and smart search",
+			"priority": 2
+		},
+		"courses": {
+			"description": "Class creation, teacher assignment, assignments, and grades",
+			"priority": 3
+		},
+		"payments": {
+			"description": "Billing cycles, payment tracking, and debt management",
+			"priority": 4
+		},
+		"attendance": {
+			"description": "Attendance tracking, calendar visualization, and statistics",
+			"priority": 5
+		},
+		"multiAcademy": {
+			"description": "True multi-tenant: Academy model + seed, super_admin /platform routes, active academy selection (cookie or server session), hooks resolve AcademyMembership for chosen academyId, replace DEV_ACADEMY_ID-only withAcademyScope; optional multi-membership UX",
+			"priority": 6
+		},
+		"integrations": {
+			"description": "Open banking production API, parent notifications (push/email), align developer checklist for keys/contracts",
+			"priority": 7
+		}
+	},
+	"automation": {
+		"mode": "auto",
+		"review": "none"
+	},
+	"git": {
+		"branchingStrategy": "feature-based"
+	}
 }

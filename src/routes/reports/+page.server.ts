@@ -1,0 +1,7 @@
+import { ensureStaffAcademyMember } from '$lib/server/rbac';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals }) => {
+	ensureStaffAcademyMember(locals);
+	return {};
+};

@@ -13,7 +13,8 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"seed": "npx --yes tsx scripts/seed.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",

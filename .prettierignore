@@ -7,3 +7,7 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# 번들·에이전트 템플릿(로컬 포맷 대상 아님)
+.fusion/
+.pi/gsd/

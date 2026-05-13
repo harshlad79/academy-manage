@@ -1,11 +1,18 @@
-<script>
-  import '../app.css';
-  import Navigation from '$lib/components/Navigation.svelte';
+<script lang="ts">
+	import '../app.css';
+	import Navigation from '$lib/components/Navigation.svelte';
+
+	let { data, children } = $props();
 </script>
 
-<div class="min-h-screen bg-gray-50 flex">
-  <Navigation />
-  <main class="flex-1 p-8">
-    <slot />
-  </main>
+<div class="flex min-h-screen bg-gray-50">
+	<Navigation
+		user={data.user}
+		links={data.navLinks}
+		brand={data.portalBrand ?? '학원 관리'}
+		academySwitcher={data.academySwitcher}
+	/>
+	<main class="flex-1 p-8">
+		{@render children()}
+	</main>
 </div>
