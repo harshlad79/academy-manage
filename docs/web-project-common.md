@@ -9,7 +9,7 @@
 
 **자율 실행**(세부는 에이전트가 추론)과 **추론 기록**은 **[agent-autonomy-policy.md](agent-autonomy-policy.md)**, **[inferred-decisions-log.md](inferred-decisions-log.md)** 를 따른다.
 
-저장소 루트에 두는 **에이전트 운영 원칙**(Git·서브에이전트·검증 등) 파일명 관례는 **`AGENTS.md`** 이다(프로젝트별로 추가).
+저장소 루트에 두는 **에이전트 운영 원칙**(Git·서브에이전트·검증·**caveman + `[CRITICAL]` 통신** 등) 파일명 관례는 **`AGENTS.md`** 이다(프로젝트별로 추가).
 
 ## 1. 배포·어댑터(프레임워크 배포 단위)
 

@@ -65,7 +65,7 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 2. **[inferred-decisions-log.md](inferred-decisions-log.md)** 최신 항목을 확인한다.
 3. `git status` 등으로 브랜치·변경 목록을 본다.
 4. **[PRD.md](PRD.md)** 로 범위를 교차 검증한다.
-5. **`.pi/taskplane-config.json`**, **`.env.example`**, 루트 **[AGENTS.md](../AGENTS.md)** 등 환경·작업 설정을 필요 시 확인한다.
+5. **`.pi/taskplane-config.json`**, **`.env.example`**, 루트 **[AGENTS.md](../AGENTS.md)** 등 환경·작업 설정을 필요 시 확인한다. 응답·서브 브리프 톤은 **AGENTS.md «통신 톤 (caveman + `[CRITICAL]`)»**.
 
 ---
 

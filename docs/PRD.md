@@ -4,7 +4,7 @@
 
 에이전트 스킬·GSD 적용 순서(다른 프로젝트 참고용): **[agent-skills-and-gsd-workflow-order.md](agent-skills-and-gsd-workflow-order.md)**.  
 자율 실행·추론 기록: **[agent-autonomy-policy.md](agent-autonomy-policy.md)**, **[inferred-decisions-log.md](inferred-decisions-log.md)**.  
-IDE·CLI 에이전트 **Git·서브·검증** 운영 원칙(루트): **[AGENTS.md](../AGENTS.md)**.  
+IDE·CLI 에이전트 **Git·서브·검증** 및 **통신 톤**(본문 caveman, 경로·계약 등은 **`[CRITICAL]`** 펜스 안 전문) 운영 원칙(루트): **[AGENTS.md](../AGENTS.md)**.  
 **세션 끊김 시 구현·대화 맥락 재개용(PRD와 별도):** **[session-handoff-and-status.md](session-handoff-and-status.md)**.
 
 외부 콘솔·키 발급 등 프로젝트 전용 체크리스트: [개발자가 처리할 항목.md](개발자가-처리할-항목.md).

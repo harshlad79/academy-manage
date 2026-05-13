@@ -22,6 +22,15 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-13 — 사용자·서브 통신: 항상 caveman + `[CRITICAL]` 전문
+
+- **맥락**: 사용자 지시 — 앞으로 사용자에게 주는 응답은 **항상 caveman**, 다만 크리티컬 정보는 **`[CRITICAL]`** 안에서만 생략·요약 없이; 서브에이전트 요청도 동일 적용 가능해야 함. 표준 파일명은 **`AGENTS.md`** (`AGENT.md` 아님).
+- **추론한 결정**:
+  - **`AGENTS.md`**: «통신 톤 (caveman + `[CRITICAL]`)» 절 신설. 사용자 답·서브 브리프·서브 완료 보고 동일 규칙.
+  - **`multi-agent.md`**: 예전 «사용자는 일반 톤» 문구 삭제, 템플릿과 AGENTS 정렬.
+  - **`session-context-digest.md`**, **`session-handoff-and-status.md`**, **`PRD.md` 헤더**, **`web-project-common.md`**: 한 줄로 상호 참조.
+- **검증**: 문서만.
+
 ### 2026-05-13 — 문서 동기화: mock·MongoDB·서브 caveman 명문화
 
 - **맥락**: 사용자 확인 — 대화 말미 합의(`AUTH_MODE=mock` 은 세션만 우회·업무 데이터는 MongoDB 필수, caveman은 서브 브리프용)가 **핸드오프·다이제스트·AGENTS**와 논리적으로 맞는지.
