@@ -22,14 +22,15 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
-### 2026-05-13 — 플랫폼 멤버 이메일 초대 MVP — 진행 중
+### 2026-05-13 — 플랫폼 멤버 이메일 초대 MVP
 
-- **맥락**: 서브에이전트 문서 선행; 구현은 병렬 트랙. 저장소 glob 기준 `*invite*`·`AcademyInvite` 등 초대 전용 소스·모델 **미랜딩**.
-- **추론한 결정** (구현 랜딩 후 경로·모델명으로 구체화):
-  - MVP: 플랫폼 **이메일 초대 대기 목록**(pending) + **수락 스텁 라우트**(accept stub; 실제 수락 로직은 후속).
-  - 라우트·모델 배치는 **`src/routes/platform/**`** 구현 트랙과 충돌 없이 위임(본 문서만 선행 갱신).
-- **대안(포기)**: 코드 없이 `session-context-digest.md` «다음 후보»·`session-handoff-and-status.md` §0 문구 대폭 수정 — 병합 전 혼선 방지로 보류.
-- **검증**: 미실행 — 초대 관련 구현 미존재.
+- **맥락**: 사용자「무한 반복 완성·멀티에이전트」— digest 후보였던 플랫폼 초대 착수.
+- **추론한 결정**:
+  - **`AcademyInvite`** 모델(`src/lib/server/models/academy-invite.ts`): `academyId`+`email` 유니크, `token` 유니크, 만료 14일, teacher 시 `linkedTeacherId` 선택·`assertTeacherLinkValid` 재사용(배제용 `__invite_pending__`).
+  - **`/platform/academies/[academyId]/members`**: `createInvite`·`revokeInvite`, 목록·수락 URL(`inviteAcceptOrigin`+`resolve('/invite/accept')`).
+  - **`/invite/accept`**: 공개 스텁 페이지 — 토큰 검증·만료 안내; 자동 멤버십 생성 없음(MVP).
+  - **`scripts/seed.ts`**: `AcademyInvite` 해당 학원 ID 범위 삭제.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
 
 ### 2026-05-13 — 사용자·서브 통신: 항상 caveman + `[CRITICAL]` 전문
 

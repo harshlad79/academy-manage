@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-13 — **비활성 학원**에서 일반 스태프 레이아웃 **`403`**(`+layout.server.ts`·`locals.academyOperationalStatus`), **`live`** 모드 플랫폼 멤버 추가 시 **`liveBetterAuthUserExists`**. 직전: 2026-05-12 `BankDeposit`·`/reports/course-revenue`·`/p` 납부 등; 2026-05-11 데모 **2학원 시드**(`DEV_ACADEMY_SECOND_ID`)·학부모 `/p` 등.
+**최근 동기화**: 2026-05-13 — 플랫폼 **`AcademyInvite`** 이메일 초대·**`/invite/accept`** 스텁·멤버 페이지 `createInvite`/`revokeInvite`. 직전: 비활성 스태프 **`403`**·`liveBetterAuthUserExists`·2학원 시드 등.
 
 ### 프로젝트·스택
 
@@ -35,7 +35,7 @@
 
 ### 시드
 
-- `npm run seed` 실행 시 **기본·분원(`DEV_ACADEMY_SECOND_ID`, 기본 `507f1f77bcf86cd799439022`)** 두 학원의 `AcademyMembership`·해당 `BankDeposit`·`ParentStudentLink` 를 정리한 뒤, 나머지 컬렉션은 대략 **`BankDeposit` → `Payment` → `InvoiceLine` → `AttendanceAuditLog` → `Attendance` → `MakeupSession` → `ParentStudentLink` → `Enrollment` → `Course` → `Teacher` → `Student`** 순으로 비우고 샘플을 다시 넣는다.
+- `npm run seed` 실행 시 **기본·분원** 두 학원의 `AcademyMembership`·`AcademyInvite`·해당 `BankDeposit`·`ParentStudentLink` 를 정리한 뒤, 나머지 컬렉션은 대략 **`BankDeposit` → `Payment` → `InvoiceLine` → `AttendanceAuditLog` → `Attendance` → `MakeupSession` → `ParentStudentLink` → `Enrollment` → `Course` → `Teacher` → `Student`** 순으로 비우고 샘플을 다시 넣는다.
 - 말미에 **`testuser`·`superadmin`** 은 기본·분원 **양쪽** 멤버십, **`parent-kim`(`parent`)** 은 기본 학원만, `ParentStudentLink` 샘플(김철수 등) 포함.
 
 ### 검증 (PR·배포 전 권장)

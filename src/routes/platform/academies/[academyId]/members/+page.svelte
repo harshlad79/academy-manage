@@ -7,6 +7,7 @@
 	let { data, form }: { data: PageData; form?: FormFlash } = $props();
 
 	let addRole = $state('academy_admin');
+	let inviteRole = $state('academy_admin');
 </script>
 
 <section class="max-w-5xl">
@@ -92,6 +93,110 @@
 			</button>
 		</div>
 	</form>
+
+	<form
+		method="POST"
+		action="?/createInvite"
+		class="mt-6 max-w-xl rounded-lg border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm"
+	>
+		<h2 class="text-sm font-semibold text-gray-900">이메일 초대 (대기)</h2>
+		<p class="mt-1 text-xs text-gray-500">
+			수락 URL은 초대당 고유 토큰이며, 만료는 약 14일입니다. 동일 이메일로 다시 보내면 이전 링크는
+			대체됩니다.
+		</p>
+		<div class="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+			<div class="min-w-[12rem] flex-1">
+				<label for="inv-email" class="block text-xs font-medium text-gray-600">이메일</label>
+				<input
+					id="inv-email"
+					name="email"
+					type="email"
+					autocomplete="email"
+					required
+					class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+					placeholder="staff@example.com"
+				/>
+			</div>
+			<div>
+				<label for="inv-role" class="block text-xs font-medium text-gray-600">역할</label>
+				<select
+					id="inv-role"
+					name="role"
+					class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm sm:w-40"
+					required
+					bind:value={inviteRole}
+				>
+					{#each data.inviteRoles as r (r)}
+						<option value={r}>{r}</option>
+					{/each}
+				</select>
+			</div>
+			<div class={inviteRole === 'teacher' ? '' : 'opacity-60'}>
+				<label for="inv-teacher" class="block text-xs font-medium text-gray-600"
+					>강사 프로필 (teacher)</label
+				>
+				<select
+					id="inv-teacher"
+					name="linkedTeacherId"
+					class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm"
+					disabled={inviteRole !== 'teacher'}
+				>
+					<option value="">나중에 연결</option>
+					{#each data.teacherOptions as opt (opt.id)}
+						<option value={opt.id}
+							>{opt.name}{#if opt.subject}&nbsp;· {opt.subject}{/if}</option
+						>
+					{/each}
+				</select>
+			</div>
+			<button
+				type="submit"
+				class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+			>
+				초대 생성
+			</button>
+		</div>
+	</form>
+
+	{#if data.inviteRows.length > 0}
+		<div class="mt-6 overflow-x-auto rounded-lg border border-indigo-100 bg-white shadow-sm">
+			<table class="min-w-full divide-y divide-gray-200 text-sm">
+				<thead class="bg-indigo-50/80">
+					<tr>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">이메일</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">역할</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">만료(UTC)</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">수락 링크</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">작업</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-100">
+					{#each data.inviteRows as inv (inv.id)}
+						<tr>
+							<td class="px-4 py-2 font-mono text-xs text-gray-900">{inv.email}</td>
+							<td class="px-4 py-2 text-gray-800">{inv.role}</td>
+							<td class="px-4 py-2 text-xs text-gray-600">{inv.expiresAt}</td>
+							<td class="max-w-xs px-4 py-2 align-top">
+								<input
+									readonly
+									class="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1 font-mono text-[11px] text-gray-800"
+									value={`${data.inviteAcceptOrigin}${resolve('/invite/accept')}?token=${encodeURIComponent(inv.token)}`}
+								/>
+							</td>
+							<td class="px-4 py-2">
+								<form method="POST" action="?/revokeInvite" class="inline">
+									<input type="hidden" name="inviteId" value={inv.id} />
+									<button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">
+										철회
+									</button>
+								</form>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{/if}
 
 	<div class="mt-8 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
 		<table class="min-w-full divide-y divide-gray-200 text-sm">

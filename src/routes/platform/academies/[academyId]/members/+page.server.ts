@@ -4,6 +4,12 @@ import { isOidHex } from '$lib/server/active-academy';
 import { isMockAuthMode, liveBetterAuthUserExists } from '$lib/server/auth';
 import connectDB from '$lib/server/db';
 import { Academy } from '$lib/server/models/academy';
+import {
+	AcademyInvite,
+	defaultInviteExpiresAt,
+	generateInviteToken,
+	normalizeInviteEmail
+} from '$lib/server/models/academy-invite';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { Teacher } from '$lib/server/models/teacher';
 import { ACADEMY_ROLES, ensurePlatformSuperAdmin, type AcademyRole } from '$lib/server/rbac';
@@ -13,6 +19,8 @@ type InviteRole = Exclude<AcademyRole, 'super_admin'>;
 const INVITE_ROLES: InviteRole[] = ACADEMY_ROLES.filter(
 	(r): r is InviteRole => r !== 'super_admin'
 );
+
+const TEACHER_INVITE_EXCLUDE = '__invite_pending__';
 
 function parseAcademyIdParam(academyIdParam: string | undefined): Types.ObjectId | null {
 	const raw = academyIdParam?.trim() ?? '';
@@ -40,19 +48,21 @@ async function assertTeacherLinkValid(
 	return { ok: true };
 }
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	ensurePlatformSuperAdmin(locals);
 	const academyId = parseAcademyIdParam(params.academyId);
 	if (!academyId) error(404, '학원을 찾을 수 없습니다.');
 	await connectDB();
-	const [academy, members, teacherDocs] = await Promise.all([
+	const [academy, members, teacherDocs, inviteDocs] = await Promise.all([
 		Academy.findById(academyId).lean(),
 		AcademyMembership.find({ academyId }).sort({ role: 1, userId: 1 }).lean(),
-		Teacher.find({ academyId }).sort({ name: 1 }).select('name subject').lean()
+		Teacher.find({ academyId }).sort({ name: 1 }).select('name subject').lean(),
+		AcademyInvite.find({ academyId }).sort({ createdAt: -1 }).lean()
 	]);
 	if (!academy) error(404, '학원을 찾을 수 없습니다.');
 	const teacherNameById = new Map(teacherDocs.map((t) => [t._id.toString(), t.name]));
 	return {
+		inviteAcceptOrigin: url.origin,
 		academyIdHex: academyId.toHexString(),
 		academyName: academy.name,
 		academyStatus: academy.status,
@@ -61,6 +71,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			id: t._id.toString(),
 			name: t.name,
 			subject: t.subject ?? null
+		})),
+		inviteRows: inviteDocs.map((inv) => ({
+			id: inv._id.toString(),
+			email: inv.email,
+			role: inv.role as InviteRole,
+			expiresAt: inv.expiresAt.toISOString(),
+			token: inv.token,
+			linkedTeacherId: inv.linkedTeacherId?.toString() ?? null,
+			linkedTeacherName: inv.linkedTeacherId
+				? (teacherNameById.get(inv.linkedTeacherId.toString()) ?? null)
+				: null
 		})),
 		rows: members.map((m) => ({
 			userId: m.userId,
@@ -171,6 +192,59 @@ export const actions: Actions = {
 		const del = await AcademyMembership.deleteOne({ userId, academyId });
 		if (del.deletedCount === 0) {
 			return fail(404, { error: '멤버십을 찾을 수 없습니다.' });
+		}
+		redirect(303, `/platform/academies/${academyId.toHexString()}/members`);
+	},
+	createInvite: async ({ request, locals, params }) => {
+		ensurePlatformSuperAdmin(locals);
+		const academyId = parseAcademyIdParam(params.academyId);
+		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
+		const fd = await request.formData();
+		const email = normalizeInviteEmail(fd.get('email')?.toString() ?? '');
+		if (!email) {
+			return fail(400, { error: '유효한 이메일 주소를 입력하세요.' });
+		}
+		const roleRaw = fd.get('role')?.toString()?.trim() ?? '';
+		if (!INVITE_ROLES.includes(roleRaw as InviteRole)) {
+			return fail(400, { error: '허용되지 않은 역할입니다.' });
+		}
+		await connectDB();
+		let linkedTeacherId: Types.ObjectId | undefined;
+		if (roleRaw === 'teacher') {
+			const ltRaw = fd.get('linkedTeacherId')?.toString()?.trim() ?? '';
+			if (ltRaw && isOidHex(ltRaw)) {
+				const tid = new Types.ObjectId(ltRaw);
+				const chk = await assertTeacherLinkValid(academyId, tid, TEACHER_INVITE_EXCLUDE);
+				if (!chk.ok) return fail(400, { error: chk.error });
+				linkedTeacherId = tid;
+			}
+		}
+		await AcademyInvite.deleteMany({ academyId, email });
+		await AcademyInvite.create({
+			academyId,
+			email,
+			role: roleRaw as InviteRole,
+			token: generateInviteToken(),
+			expiresAt: defaultInviteExpiresAt(),
+			...(locals.user?.id ? { createdByUserId: locals.user.id } : {}),
+			...(linkedTeacherId ? { linkedTeacherId } : {})
+		});
+		redirect(303, `/platform/academies/${academyId.toHexString()}/members`);
+	},
+	revokeInvite: async ({ request, locals, params }) => {
+		ensurePlatformSuperAdmin(locals);
+		const academyId = parseAcademyIdParam(params.academyId);
+		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
+		const fd = await request.formData();
+		const idRaw = fd.get('inviteId')?.toString()?.trim() ?? '';
+		if (!isOidHex(idRaw)) {
+			return fail(400, { error: '잘못된 초대 ID입니다.' });
+		}
+		await connectDB();
+		const oid = new Types.ObjectId(idRaw);
+		const del = await AcademyInvite.deleteOne({ _id: oid, academyId });
+		if (del.deletedCount === 0) {
+			return fail(404, { error: '초대를 찾을 수 없습니다.' });
 		}
 		redirect(303, `/platform/academies/${academyId.toHexString()}/members`);
 	}
