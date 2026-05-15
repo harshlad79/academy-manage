@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { PageData } from './$types';
 
 	type FormFlash = { error?: string };
@@ -41,14 +42,30 @@
 			<p
 				class="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
 			>
-				<strong>로그인 필요:</strong> 이 초대를 수락하려면 초대된 이메일과 동일한 계정으로 로그인한 뒤
-				이 페이지를 다시 여세요.
+				<strong>로그인 필요:</strong> 초대 이메일(<span class="font-mono">{data.email}</span>)과
+				같은 계정으로 로그인·가입한 뒤 이 페이지에서 수락하세요.
 			</p>
-			<p class="mt-2 text-xs text-gray-500">
-				목업(<code class="font-mono">AUTH_MODE=mock</code>)에서는
-				<code class="font-mono">AUTH_MOCK_USER_ID</code>에 해당하는 프로필 이메일이 초대와 같아야
-				합니다.
-			</p>
+			<form method="GET" action={resolve('/auth/sign-in')} class="mt-4">
+				<input type="hidden" name="callbackURL" value={data.inviteReturnPath} />
+				<input type="hidden" name="inviteEmail" value={data.email} />
+				<button
+					type="submit"
+					class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+				>
+					{data.isMockAuth ? '목업 로그인 안내' : '로그인 · 가입'}
+				</button>
+			</form>
+			{#if data.isMockAuth && data.mockUserIdHint}
+				<p class="mt-3 text-xs text-gray-600">
+					목업: <code class="font-mono">AUTH_MOCK_USER_ID={data.mockUserIdHint}</code> 로 서버 재시작
+					후 이 페이지를 새로고침하세요.
+				</p>
+			{:else if data.isMockAuth}
+				<p class="mt-3 text-xs text-gray-600">
+					목업: 초대 이메일과 맞는 프로필이 없으면 live 모드 가입 또는 시드 이메일로 초대를
+					보내세요.
+				</p>
+			{/if}
 		{:else if data.acceptUi === 'no_session_email'}
 			<p class="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
 				현재 세션 계정에 이메일이 없어 초대를 검증할 수 없습니다. 관리자에게 문의하세요.
@@ -60,6 +77,16 @@
 				<strong>이메일 불일치:</strong> 이 초대는 <span class="font-mono">{data.email}</span>로
 				발급되었습니다. 초대와 같은 이메일의 계정으로 로그인한 뒤 다시 시도하세요.
 			</p>
+			<form method="GET" action={resolve('/auth/sign-in')} class="mt-4">
+				<input type="hidden" name="callbackURL" value={data.inviteReturnPath} />
+				<input type="hidden" name="inviteEmail" value={data.email} />
+				<button
+					type="submit"
+					class="rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+				>
+					다른 계정으로 로그인 · 가입
+				</button>
+			</form>
 		{:else}
 			<form method="POST" action="?/acceptInvite" class="mt-8 space-y-4">
 				<input type="hidden" name="token" value={data.token} />

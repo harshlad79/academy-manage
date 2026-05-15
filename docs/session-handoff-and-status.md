@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-15 — **`AcademyInvite` 초대 메일**(네이버 SMTP, `invite-mail.ts`): `createInvite` 후 `INVITE_MAIL_ENABLED` 시 발송, 실패 시 DB 유지·**`resendInvite`**·`lastEmailSentAt`/`lastEmailError`. 기본 mock·로컬은 미발송. 직전: `/invite/accept` 수락 시 멤버십 생성·`teacher-membership-link` 공유.
+**최근 동기화**: 2026-05-15 — **`/auth/sign-in`**: live 시 이메일 로그인·가입 후 `callbackURL`로 `/invite/accept` 복귀; mock은 `AUTH_MOCK_USER_ID` 안내. 직전: **초대 메일**(네이버 SMTP)·`resendInvite`·`lastEmailSentAt`/`lastEmailError`.
 
 ### 프로젝트·스택
 
@@ -44,7 +44,7 @@
 
 ### 다음 과제(후보)
 
-수락 전 **비가입자 가입 후 `/invite/accept` 복귀**, **은행 오픈뱅킹 API** 실연동, 학부모 포털 **영수증·알림**, 멀티테넌트·Taskplane 후속. 초대 메일 설계: [`superpowers/specs/2026-05-15-invite-email-design.md`](superpowers/specs/2026-05-15-invite-email-design.md).
+**은행 오픈뱅킹 API** 실연동, 학부모 포털 **영수증·알림**, 멀티테넌트·Taskplane 후속. 초대 메일 설계: [`superpowers/specs/2026-05-15-invite-email-design.md`](superpowers/specs/2026-05-15-invite-email-design.md).
 
 ### 짧은 재개(토큰 절약)
 
@@ -92,18 +92,18 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 
 ## 4. MVP 구현 대응표(요약)
 
-| 영역                  | 경로·비고                                                                                                                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 레이아웃·내비         | `Navigation.svelte`, 역할별 링크, `$app/paths` `resolve`                                                                                                                                                                |
-| 인증·RBAC             | `hooks.server.ts`, `auth.ts`, `AcademyMembership`, `rbac.ts`                                                                                                                                                            |
-| 학생·강사·클래스 CRUD | `/students`, `/teachers`, `/courses`                                                                                                                                                                                    |
-| 수강                  | `/enrollments` (중복 삭제 시 연쇄 정리 포함)                                                                                                                                                                            |
-| 출결·감사 로그        | `/attendance`, `AttendanceAuditLog`                                                                                                                                                                                     |
-| 보강                  | `/makeups`                                                                                                                                                                                                              |
-| 청구·수납             | `/payments`, `InvoiceLine`, `Payment`, **`BankDeposit`(입금 줄)**                                                                                                                                                       |
-| 클래스 정산           | **`/reports`** → **`/reports/course-revenue`** — 월별 수납·미납 집계                                                                                                                                                    |
+| 영역                  | 경로·비고                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 레이아웃·내비         | `Navigation.svelte`, 역할별 링크, `$app/paths` `resolve`                                                                                                                                                     |
+| 인증·RBAC             | `hooks.server.ts`, `auth.ts`, `AcademyMembership`, `rbac.ts`                                                                                                                                                 |
+| 학생·강사·클래스 CRUD | `/students`, `/teachers`, `/courses`                                                                                                                                                                         |
+| 수강                  | `/enrollments` (중복 삭제 시 연쇄 정리 포함)                                                                                                                                                                 |
+| 출결·감사 로그        | `/attendance`, `AttendanceAuditLog`                                                                                                                                                                          |
+| 보강                  | `/makeups`                                                                                                                                                                                                   |
+| 청구·수납             | `/payments`, `InvoiceLine`, `Payment`, **`BankDeposit`(입금 줄)**                                                                                                                                            |
+| 클래스 정산           | **`/reports`** → **`/reports/course-revenue`** — 월별 수납·미납 집계                                                                                                                                         |
 | 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`**, **`/platform/academies/[id]/members`** — `Academy`·멤버·**`AcademyInvite`** 생성·철회·**SMTP 초대 메일·재발송**, **`/invite/accept?token=`** 수락 시 멤버십 생성 |
-| 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                                      |
+| 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                           |
 
 **후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 수락 전용 **가입(회원가입) 플로**와의 딥링크, 다학원·연동 잔여.
 

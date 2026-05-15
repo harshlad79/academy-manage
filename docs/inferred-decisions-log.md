@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-15 — 비가입자 가입·로그인 후 `/invite/accept` 복귀
+
+- **맥락**: 초대 수락 UI에서 `need_login`·`email_mismatch` 시 인증 유도; live는 Better Auth 이메일·비밀번호, mock은 `AUTH_MOCK_USER_ID` 안내.
+- **추론한 결정**:
+  - **`invite-return.ts`**: `sanitizeInviteCallbackURL`로 `/invite/accept?token=` 만 허용; `buildInviteAcceptReturnPath`·`buildInviteAuthSignInSearch`로 sign-in 쿼리 조립.
+  - **`/auth/sign-in`**: `callbackURL`·`inviteEmail` 쿼리; live `signIn.email`/`signUp.email` 후 callback; mock은 프로필·`mockUserIdForInviteEmail` 힌트.
+  - **`/invite/accept`**: GET form + `resolve()` + hidden `token`/`callbackURL`/`inviteEmail` — `svelte/no-navigation-without-resolve` 준수.
+  - **mock**: `mock-invite-auth.ts`에서 초대 이메일→mock userId 매핑 힌트.
+- **검증**: `npm run check` · `npm test`(46) · `npm run lint` · `npm run build`.
+
 ### 2026-05-15 — AcademyInvite 초대 메일 (네이버 SMTP)
 
 - **맥락**: [docs/superpowers/specs/2026-05-15-invite-email-design.md](superpowers/specs/2026-05-15-invite-email-design.md) 승인 후 구현.

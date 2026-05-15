@@ -1,5 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 
+import { buildInviteAcceptReturnPath } from '$lib/server/invite-return';
+import { isMockAuthMode } from '$lib/server/auth';
+import { mockUserIdForInviteEmail } from '$lib/server/mock-invite-auth';
 import connectDB from '$lib/server/db';
 import {
 	consumeAcademyInviteForLoggedInUser,
@@ -38,6 +41,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	}
 	const academy = await Academy.findById(inv.academyId).select('name status').lean();
 	const acceptUi = resolveAcceptUi(locals.user, inv.email);
+	const returnPath = buildInviteAcceptReturnPath(token);
 	return {
 		kind: 'ok' as const,
 		token,
@@ -45,7 +49,10 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		role: inv.role as AcademyInviteRole,
 		academyName: academy?.name ?? '학원',
 		academyStatus: academy?.status ?? 'unknown',
-		acceptUi
+		acceptUi,
+		inviteReturnPath: returnPath,
+		isMockAuth: isMockAuthMode(),
+		mockUserIdHint: isMockAuthMode() ? mockUserIdForInviteEmail(inv.email) : null
 	};
 };
 
