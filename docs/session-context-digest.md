@@ -22,7 +22,7 @@
 | 대시보드 `/`           | 학생·클래스·수강·미납·미매칭 입금 + **보강·강사** 건수 카드                                         |
 | 소통 `/communications` | 연결·학부모 멤버십·학생 수 3열 통계, 학생 관리 안내                                                 |
 | 멀티에이전트 문서      | [`multi-agent.md`](multi-agent.md), [`multi-agent-lessons.md`](multi-agent-lessons.md)              |
-| 다학원·초대            | `Academy`·쿠키·`/platform/.../members`·**`AcademyInvite`**·**`/invite/accept`** 수락 시 멤버십 생성 |
+| 다학원·초대            | `AcademyInvite`·**SMTP 메일**(`invite-mail`, `INVITE_MAIL_ENABLED`)·재발송·**`/invite/accept`** 수락 |
 
 ## 경로
 
@@ -38,4 +38,4 @@
 
 ## 다음 후보
 
-초대 **이메일 발송**(SMTP·링크), 수락 페이지에서 **비가입자 → 가입 후 복귀** UX. Taskplane **`integrations`(7)**.
+수락 **비가입자 → 가입 후 복귀** UX, 은행 API, 학부모 영수증·알림. Taskplane **`integrations`(7)**.

@@ -20,6 +20,10 @@ export type AcademyInviteDoc = {
 	createdByUserId?: string;
 	/** teacher 초대 시 미리 연결할 강사 프로필 */
 	linkedTeacherId?: Types.ObjectId;
+	/** 마지막 초대 메일 발송 성공 시각 */
+	lastEmailSentAt?: Date;
+	/** 마지막 초대 메일 발송 실패 메시지(짧게 truncate) */
+	lastEmailError?: string;
 };
 
 const INVITE_ROLE_VALUES = ['academy_admin', 'office', 'teacher', 'parent'] as const;
@@ -32,7 +36,9 @@ const AcademyInviteSchema = new Schema<AcademyInviteDoc>(
 		token: { type: String, required: true, unique: true, index: true },
 		expiresAt: { type: Date, required: true, index: true },
 		createdByUserId: { type: String },
-		linkedTeacherId: { type: Schema.Types.ObjectId, ref: 'Teacher' }
+		linkedTeacherId: { type: Schema.Types.ObjectId, ref: 'Teacher' },
+		lastEmailSentAt: { type: Date },
+		lastEmailError: { type: String }
 	},
 	{ timestamps: true }
 );

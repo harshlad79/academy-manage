@@ -6,6 +6,16 @@
 
 	let { data, form }: { data: PageData; form?: FormFlash } = $props();
 
+	function inviteMailStatusLabel(inv: PageData['inviteRows'][number]): string {
+		if (inv.lastEmailSentAt) {
+			return `발송됨 · ${inv.lastEmailSentAt.slice(0, 19).replace('T', ' ')} UTC`;
+		}
+		if (inv.lastEmailError) {
+			return `실패 · ${inv.lastEmailError}`;
+		}
+		return '미발송';
+	}
+
 	let addRole = $state('academy_admin');
 	let inviteRole = $state('academy_admin');
 </script>
@@ -23,6 +33,16 @@
 		상태
 		<span class="font-medium">{data.academyStatus}</span>
 	</p>
+
+	{#if data.noticeMessage}
+		<p
+			class="mt-4 rounded-md border px-4 py-3 text-sm {data.noticeMessage.includes('실패')
+				? 'border-amber-200 bg-amber-50 text-amber-950'
+				: 'border-emerald-200 bg-emerald-50 text-emerald-950'}"
+		>
+			{data.noticeMessage}
+		</p>
+	{/if}
 
 	{#if form?.error}
 		<p class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
@@ -166,6 +186,7 @@
 						<th class="px-4 py-2 text-left font-medium text-gray-700">이메일</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">역할</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">만료(UTC)</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">메일</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">수락 링크</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">작업</th>
 					</tr>
@@ -176,6 +197,15 @@
 							<td class="px-4 py-2 font-mono text-xs text-gray-900">{inv.email}</td>
 							<td class="px-4 py-2 text-gray-800">{inv.role}</td>
 							<td class="px-4 py-2 text-xs text-gray-600">{inv.expiresAt}</td>
+							<td class="max-w-[10rem] px-4 py-2 text-xs text-gray-700">
+								<span
+									class={inv.lastEmailError
+										? 'text-amber-800'
+										: inv.lastEmailSentAt
+											? 'text-emerald-800'
+											: 'text-gray-500'}>{inviteMailStatusLabel(inv)}</span
+								>
+							</td>
 							<td class="max-w-xs px-4 py-2 align-top">
 								<input
 									readonly
@@ -184,6 +214,15 @@
 								/>
 							</td>
 							<td class="px-4 py-2">
+								<form method="POST" action="?/resendInvite" class="mr-3 inline">
+									<input type="hidden" name="inviteId" value={inv.id} />
+									<button
+										type="submit"
+										class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+									>
+										메일 재발송
+									</button>
+								</form>
 								<form method="POST" action="?/revokeInvite" class="inline">
 									<input type="hidden" name="inviteId" value={inv.id} />
 									<button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">

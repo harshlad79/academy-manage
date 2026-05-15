@@ -25,6 +25,7 @@
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/mongoose": "^5.11.96",
 		"@types/node": "^22",
+		"@types/nodemailer": "^8.0.0",
 		"eslint": "^10.2.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
@@ -43,6 +44,7 @@
 	"dependencies": {
 		"better-auth": "^1.6.10",
 		"dotenv": "^17.4.2",
-		"mongoose": "^9.6.2"
+		"mongoose": "^9.6.2",
+		"nodemailer": "^8.0.7"
 	}
 }

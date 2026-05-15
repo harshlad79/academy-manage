@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-15 — AcademyInvite 초대 메일 (네이버 SMTP)
+
+- **맥락**: [docs/superpowers/specs/2026-05-15-invite-email-design.md](superpowers/specs/2026-05-15-invite-email-design.md) 승인 후 구현.
+- **추론한 결정**:
+  - **`invite-mail.ts`**: `INVITE_MAIL_ENABLED=true` + SMTP env 있을 때만 nodemailer 발송; mock 여부와 무관.
+  - **실패(D)**: `createInvite` DB 유지 + `lastEmailError`·목록 재발송·URL 복사; redirect `?notice=` flash.
+  - **수락 URL**: `PUBLIC_APP_ORIGIN` → `BETTER_AUTH_URL` → 요청 `origin`.
+  - **`AcademyInvite`**: `lastEmailSentAt`, `lastEmailError`.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-13 — 초대 수락으로 `AcademyMembership` 생성
 
 - **맥락**: 다이제스트·핸드오프 후속 — 토큰 수락 시 DB 멤버십 반영.

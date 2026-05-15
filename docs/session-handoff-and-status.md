@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-13 — `/invite/accept` **로그인·이메일 일치 시** `POST acceptInvite`로 **`AcademyMembership` 생성·초대 삭제**; 강사 링크 검증 **`teacher-membership-link`** 공유. 직전: **`AcademyInvite`** 스텁·멤버 `createInvite`/`revokeInvite`·비활성 스태프 **`403`** 등.
+**최근 동기화**: 2026-05-15 — **`AcademyInvite` 초대 메일**(네이버 SMTP, `invite-mail.ts`): `createInvite` 후 `INVITE_MAIL_ENABLED` 시 발송, 실패 시 DB 유지·**`resendInvite`**·`lastEmailSentAt`/`lastEmailError`. 기본 mock·로컬은 미발송. 직전: `/invite/accept` 수락 시 멤버십 생성·`teacher-membership-link` 공유.
 
 ### 프로젝트·스택
 
@@ -44,7 +44,7 @@
 
 ### 다음 과제(후보)
 
-**은행 오픈뱅킹 API** 실연동, 학부모 포털 **영수증·알림** 등 세부, 멀티테넌트·Taskplane 후속.
+수락 전 **비가입자 가입 후 `/invite/accept` 복귀**, **은행 오픈뱅킹 API** 실연동, 학부모 포털 **영수증·알림**, 멀티테넌트·Taskplane 후속. 초대 메일 설계: [`superpowers/specs/2026-05-15-invite-email-design.md`](superpowers/specs/2026-05-15-invite-email-design.md).
 
 ### 짧은 재개(토큰 절약)
 
@@ -102,14 +102,14 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 | 보강                  | `/makeups`                                                                                                                                                                                                              |
 | 청구·수납             | `/payments`, `InvoiceLine`, `Payment`, **`BankDeposit`(입금 줄)**                                                                                                                                                       |
 | 클래스 정산           | **`/reports`** → **`/reports/course-revenue`** — 월별 수납·미납 집계                                                                                                                                                    |
-| 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`**, **`/platform/academies/[id]/members`** — `Academy`·멤버·**`AcademyInvite`** 생성·철회, **`/invite/accept?token=`** 로그인·이메일 일치 시 **수락으로 멤버십 생성·초대 삭제** |
+| 플랫폼(전체관리자)    | **`/platform`**, **`/platform/academies`**, **`/platform/academies/[id]/members`** — `Academy`·멤버·**`AcademyInvite`** 생성·철회·**SMTP 초대 메일·재발송**, **`/invite/accept?token=`** 수락 시 멤버십 생성 |
 | 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                                      |
 
-**후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 초대 **이메일 발송(SMTP 등)**, 수락 전용 **가입(회원가입) 플로**와의 딥링크, 다학원·연동 잔여.
+**후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 수락 전용 **가입(회원가입) 플로**와의 딥링크, 다학원·연동 잔여.
 
 ## 5. 핵심 파일
 
-`src/lib/server/models/{academy,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `invite-consume.ts`, `teacher-membership-link.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**`
+`src/lib/server/models/{academy,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `invite-consume.ts`, `invite-mail.ts`, `invite-email-meta.ts`, `teacher-membership-link.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**`
 
 ---
 

@@ -12,6 +12,15 @@ import {
 } from '$lib/server/models/academy-invite';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { Teacher } from '$lib/server/models/teacher';
+import { applyInviteEmailMeta } from '$lib/server/invite-email-meta';
+import {
+	buildInviteAcceptUrl,
+	type InviteMailEnv,
+	inviteMailNoticeMessage,
+	inviteMailResultNotice,
+	resolveInviteMailOrigin,
+	sendAcademyInviteEmail
+} from '$lib/server/invite-mail';
 import {
 	assertTeacherLinkValid,
 	TEACHER_INVITE_PENDING_USER_ID
@@ -30,6 +39,34 @@ function parseAcademyIdParam(academyIdParam: string | undefined): Types.ObjectId
 	return new Types.ObjectId(raw);
 }
 
+function membersRedirect(academyIdHex: string, notice: string): never {
+	redirect(303, `/platform/academies/${academyIdHex}/members?notice=${encodeURIComponent(notice)}`);
+}
+
+async function dispatchInviteEmail(
+	inviteId: Types.ObjectId,
+	academyName: string,
+	email: string,
+	role: InviteRole,
+	token: string,
+	expiresAt: Date,
+	requestOrigin: string,
+	kind: 'create' | 'resend'
+): Promise<string> {
+	const mailEnv = process.env as InviteMailEnv;
+	const originBase = resolveInviteMailOrigin(mailEnv, requestOrigin);
+	const acceptUrl = buildInviteAcceptUrl(originBase, token);
+	const mailResult = await sendAcademyInviteEmail({
+		to: email,
+		academyName,
+		role,
+		acceptUrl,
+		expiresAt
+	});
+	await applyInviteEmailMeta(inviteId, mailResult);
+	return inviteMailResultNotice(mailResult, kind);
+}
+
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	ensurePlatformSuperAdmin(locals);
 	const academyId = parseAcademyIdParam(params.academyId);
@@ -43,8 +80,10 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	]);
 	if (!academy) error(404, '학원을 찾을 수 없습니다.');
 	const teacherNameById = new Map(teacherDocs.map((t) => [t._id.toString(), t.name]));
+	const notice = url.searchParams.get('notice');
 	return {
-		inviteAcceptOrigin: url.origin,
+		inviteAcceptOrigin: resolveInviteMailOrigin(process.env as InviteMailEnv, url.origin),
+		noticeMessage: inviteMailNoticeMessage(notice),
 		academyIdHex: academyId.toHexString(),
 		academyName: academy.name,
 		academyStatus: academy.status,
@@ -63,7 +102,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			linkedTeacherId: inv.linkedTeacherId?.toString() ?? null,
 			linkedTeacherName: inv.linkedTeacherId
 				? (teacherNameById.get(inv.linkedTeacherId.toString()) ?? null)
-				: null
+				: null,
+			lastEmailSentAt: inv.lastEmailSentAt?.toISOString() ?? null,
+			lastEmailError: inv.lastEmailError ?? null
 		})),
 		rows: members.map((m) => ({
 			userId: m.userId,
@@ -177,7 +218,7 @@ export const actions: Actions = {
 		}
 		redirect(303, `/platform/academies/${academyId.toHexString()}/members`);
 	},
-	createInvite: async ({ request, locals, params }) => {
+	createInvite: async ({ request, locals, params, url }) => {
 		ensurePlatformSuperAdmin(locals);
 		const academyId = parseAcademyIdParam(params.academyId);
 		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
@@ -202,16 +243,66 @@ export const actions: Actions = {
 			}
 		}
 		await AcademyInvite.deleteMany({ academyId, email });
-		await AcademyInvite.create({
+		const token = generateInviteToken();
+		const expiresAt = defaultInviteExpiresAt();
+		const created = await AcademyInvite.create({
 			academyId,
 			email,
 			role: roleRaw as InviteRole,
-			token: generateInviteToken(),
-			expiresAt: defaultInviteExpiresAt(),
+			token,
+			expiresAt,
 			...(locals.user?.id ? { createdByUserId: locals.user.id } : {}),
 			...(linkedTeacherId ? { linkedTeacherId } : {})
 		});
-		redirect(303, `/platform/academies/${academyId.toHexString()}/members`);
+		const academy = await Academy.findById(academyId).lean();
+		const academyName = academy?.name ?? '학원';
+		const notice = await dispatchInviteEmail(
+			created._id,
+			academyName,
+			email,
+			roleRaw as InviteRole,
+			token,
+			expiresAt,
+			url.origin,
+			'create'
+		);
+		membersRedirect(academyId.toHexString(), notice);
+	},
+	resendInvite: async ({ request, locals, params, url }) => {
+		ensurePlatformSuperAdmin(locals);
+		const academyId = parseAcademyIdParam(params.academyId);
+		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
+		const fd = await request.formData();
+		const idRaw = fd.get('inviteId')?.toString()?.trim() ?? '';
+		if (!isOidHex(idRaw)) {
+			return fail(400, { error: '잘못된 초대 ID입니다.' });
+		}
+		await connectDB();
+		const oid = new Types.ObjectId(idRaw);
+		const inv = await AcademyInvite.findOne({ _id: oid, academyId }).lean();
+		if (!inv) {
+			return fail(404, { error: '초대를 찾을 수 없습니다.' });
+		}
+		if (inv.expiresAt.getTime() < Date.now()) {
+			return fail(400, {
+				error: '만료된 초대에는 메일을 재발송할 수 없습니다. 새 초대를 만드세요.'
+			});
+		}
+		const academy = await Academy.findById(academyId).lean();
+		if (!academy) {
+			return fail(404, { error: '학원을 찾을 수 없습니다.' });
+		}
+		const notice = await dispatchInviteEmail(
+			oid,
+			academy.name,
+			inv.email,
+			inv.role as InviteRole,
+			inv.token,
+			inv.expiresAt,
+			url.origin,
+			'resend'
+		);
+		membersRedirect(academyId.toHexString(), notice);
 	},
 	revokeInvite: async ({ request, locals, params }) => {
 		ensurePlatformSuperAdmin(locals);
