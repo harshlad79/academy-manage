@@ -33,3 +33,29 @@ IDE·Cursor CLI 에이전트가 이 저장소에서 작업할 때의 **기본 �
 ## 파일 이름
 
 - Cursor 등에서 관례적으로 쓰는 표준 파일명은 **`AGENTS.md`**(복수)이다. 이 저장소의 에이전트 운영 원칙 단일 원본도 **`AGENTS.md`** 로 둔다.
+
+## Cursor Cloud specific instructions
+
+### 서비스 구성
+
+| 서비스 | 포트 | 필수 | 비고 |
+|--------|------|------|------|
+| SvelteKit (Vite) | 5173 | 필수 | `npm run dev` |
+| MongoDB | 27017 | 필수 | `mongod --fork --logpath /tmp/mongod.log --dbpath /data/db` |
+
+### 개발 서버 실행 순서
+
+1. MongoDB 기동: `mongod --fork --logpath /tmp/mongod.log --dbpath /data/db`
+2. `.env` 없으면: `cp .env.example .env` (기본 `AUTH_MODE=mock`)
+3. 시드: `npm run seed` — 단, `scripts/seed.ts` 151행에 디스트럭처링 버그 있음 (`enb[0]._id` → `enb._id`). 에러 나면 메인 학원 데이터는 이미 삽입되어 있으므로 멤버십만 수동 보완 필요.
+4. `npm run dev`
+
+### 검증 커맨드
+
+README 참조: `npm run check` → `npm test` → `npm run lint` → `npm run build`
+
+### 인증 모드
+
+- `AUTH_MODE=mock`: OAuth 없이 고정 사용자(`testuser`)로 자동 로그인. 개발·테스트용.
+- `AUTH_MODE=live`: Better Auth + 소셜 로그인(카카오·네이버·구글). OAuth 시크릿 필요.
+- mock 모드 사용자 전환: `.env`의 `AUTH_MOCK_USER_ID` 값 변경 (`testuser`, `superadmin`, `parent-kim`).
