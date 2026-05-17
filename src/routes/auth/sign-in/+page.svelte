@@ -16,6 +16,13 @@
 	let name = $state('');
 	let busy = $state(false);
 	let clientError = $state<string | null>(null);
+	let returnToAcceptForm = $state<HTMLFormElement | null>(null);
+
+	const inviteReturnPath = $derived(`${data.callbackPathname}${data.callbackSearch}`);
+
+	function submitReturnToAcceptForm() {
+		returnToAcceptForm?.requestSubmit();
+	}
 
 	async function submitSignIn() {
 		clientError = null;
@@ -24,7 +31,7 @@
 			const { error } = await authClient.signIn.email({
 				email: email.trim(),
 				password,
-				callbackURL: `${data.callbackPathname}${data.callbackSearch}`
+				callbackURL: inviteReturnPath
 			});
 			if (error) {
 				clientError = error.message ?? '로그인에 실패했습니다.';
@@ -42,11 +49,13 @@
 				name: name.trim() || email.trim(),
 				email: email.trim(),
 				password,
-				callbackURL: `${data.callbackPathname}${data.callbackSearch}`
+				callbackURL: inviteReturnPath
 			});
 			if (error) {
 				clientError = error.message ?? '가입에 실패했습니다.';
+				return;
 			}
+			submitReturnToAcceptForm();
 		} finally {
 			busy = false;
 		}
@@ -151,7 +160,7 @@
 					class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
 					bind:value={email}
 					autocomplete="email"
-					readonly={!!data.inviteEmail && mode === 'sign-up'}
+					readonly={!!data.inviteEmail}
 				/>
 			</div>
 			<div>
@@ -176,7 +185,12 @@
 		</form>
 
 		{#if data.callbackToken}
-			<form method="GET" action={resolve('/invite/accept')} class="mt-4 text-xs text-gray-500">
+			<form
+				bind:this={returnToAcceptForm}
+				method="GET"
+				action={resolve('/invite/accept')}
+				class="mt-4 text-xs text-gray-500"
+			>
 				<input type="hidden" name="token" value={data.callbackToken} />
 				<span>완료 후 </span>
 				<button type="submit" class="text-indigo-600 underline">초대 수락 페이지</button>

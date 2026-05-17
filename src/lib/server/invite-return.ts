@@ -11,7 +11,7 @@ export function sanitizeInviteCallbackURL(
 		const parsed = new URL(trimmed, base);
 		if (parsed.origin !== base.origin) return fallback;
 		const path = `${parsed.pathname}${parsed.search}`;
-		if (!parsed.pathname.startsWith('/invite/accept')) return fallback;
+		if (parsed.pathname !== '/invite/accept') return fallback;
 		return path;
 	} catch {
 		return fallback;
@@ -20,19 +20,6 @@ export function sanitizeInviteCallbackURL(
 
 export function buildInviteAcceptReturnPath(token: string): string {
 	return `/invite/accept?token=${encodeURIComponent(token)}`;
-}
-
-export function buildInviteAuthSignInPath(returnPath: string, inviteEmail?: string): string {
-	const q = new URLSearchParams({ callbackURL: returnPath });
-	if (inviteEmail) q.set('inviteEmail', inviteEmail);
-	return `/auth/sign-in?${q.toString()}`;
-}
-
-export function buildInviteAuthSignInSearch(returnPath: string, inviteEmail?: string): string {
-	const q = new URLSearchParams({ callbackURL: returnPath });
-	if (inviteEmail) q.set('inviteEmail', inviteEmail);
-	const s = q.toString();
-	return s ? `?${s}` : '';
 }
 
 /** 앱 내부 경로를 pathname + search 로 분리 (`resolve()` 용). */

@@ -20,6 +20,10 @@ describe('sanitizeInviteCallbackURL', () => {
 	it('invite 외 경로 거부', () => {
 		expect(sanitizeInviteCallbackURL('/payments', origin)).toBe('/invite/accept');
 	});
+
+	it('invite/accept 접두사만 같은 다른 경로 거부', () => {
+		expect(sanitizeInviteCallbackURL('/invite/accept-evil?token=x', origin)).toBe('/invite/accept');
+	});
 });
 
 describe('buildInviteAcceptReturnPath', () => {
