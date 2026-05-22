@@ -14,22 +14,22 @@
 
 ## File map
 
-| File | Action |
-|------|--------|
-| `src/lib/server/auth.ts` | Modify — social providers, `termsAcceptedAt`, helpers |
-| `src/lib/server/auth-social.ts` | Create — env·provider 빌드 (auth.ts 비대화 방지) |
-| `src/lib/server/auth-social.test.ts` | Create — provider/env 단위 테스트 |
-| `src/lib/server/terms-gate.ts` | Create — 약관 필요 여부·경로 예외 |
-| `src/lib/server/terms-gate.test.ts` | Create |
-| `src/hooks.server.ts` | Modify — 약관 게이트 리다이렉트 |
-| `src/routes/auth/sign-in/+page.server.ts` | Modify — `liveSocial`, enabled providers |
-| `src/routes/auth/sign-in/+page.svelte` | Modify — 소셜 UI·조건부 이메일 폼 |
-| `src/routes/auth/accept-terms/+page.server.ts` | Create |
-| `src/routes/auth/accept-terms/+page.svelte` | Create |
-| `src/routes/invite/accept/+page.svelte` | Modify — 카카오 CTA 문구 |
-| `.env.example` | Modify — KAKAO/NAVER/GOOGLE |
-| `docs/개발자가-처리할-항목.md` | Modify — Redirect URI 예시 |
-| `docs/session-handoff-and-status.md` | Modify — §0 한 줄 |
+| File                                           | Action                                                |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| `src/lib/server/auth.ts`                       | Modify — social providers, `termsAcceptedAt`, helpers |
+| `src/lib/server/auth-social.ts`                | Create — env·provider 빌드 (auth.ts 비대화 방지)      |
+| `src/lib/server/auth-social.test.ts`           | Create — provider/env 단위 테스트                     |
+| `src/lib/server/terms-gate.ts`                 | Create — 약관 필요 여부·경로 예외                     |
+| `src/lib/server/terms-gate.test.ts`            | Create                                                |
+| `src/hooks.server.ts`                          | Modify — 약관 게이트 리다이렉트                       |
+| `src/routes/auth/sign-in/+page.server.ts`      | Modify — `liveSocial`, enabled providers              |
+| `src/routes/auth/sign-in/+page.svelte`         | Modify — 소셜 UI·조건부 이메일 폼                     |
+| `src/routes/auth/accept-terms/+page.server.ts` | Create                                                |
+| `src/routes/auth/accept-terms/+page.svelte`    | Create                                                |
+| `src/routes/invite/accept/+page.svelte`        | Modify — 카카오 CTA 문구                              |
+| `.env.example`                                 | Modify — KAKAO/NAVER/GOOGLE                           |
+| `docs/개발자가-처리할-항목.md`                 | Modify — Redirect URI 예시                            |
+| `docs/session-handoff-and-status.md`           | Modify — §0 한 줄                                     |
 
 **Out of scope:** SMS 초대, `parent` 초대 UI 제거, 대기 큐.
 
@@ -38,6 +38,7 @@
 ### Task 1: 소셜 env 헬퍼 + 단위 테스트
 
 **Files:**
+
 - Create: `src/lib/server/auth-social.ts`
 - Create: `src/lib/server/auth-social.test.ts`
 
@@ -130,6 +131,7 @@ git commit -m "feat(auth): add social provider env builder"
 ### Task 2: `auth.ts` — socialProviders + termsAcceptedAt
 
 **Files:**
+
 - Modify: `src/lib/server/auth.ts`
 - Modify: `src/lib/server/auth-social.test.ts` (export re-export test optional)
 
@@ -184,6 +186,7 @@ git commit -m "feat(auth): wire kakao naver google and termsAcceptedAt"
 ### Task 3: 약관 게이트 (`terms-gate` + hooks)
 
 **Files:**
+
 - Create: `src/lib/server/terms-gate.ts`
 - Create: `src/lib/server/terms-gate.test.ts`
 - Modify: `src/hooks.server.ts`
@@ -245,7 +248,11 @@ import { needsTermsAcceptance, shouldSkipTermsGate } from '$lib/server/terms-gat
 import { redirect } from '@sveltejs/kit';
 
 // after bundle assigned to locals.user in live branch:
-if (!isMockAuthMode() && event.locals.user && needsTermsAcceptance(event.locals.user as { termsAcceptedAt?: Date | null })) {
+if (
+	!isMockAuthMode() &&
+	event.locals.user &&
+	needsTermsAcceptance(event.locals.user as { termsAcceptedAt?: Date | null })
+) {
 	const path = event.url.pathname;
 	if (!shouldSkipTermsGate(path)) {
 		const next = `${path}${event.url.search}`;
@@ -272,6 +279,7 @@ git commit -m "feat(auth): redirect to accept-terms when not accepted"
 ### Task 4: `/auth/accept-terms` 페이지
 
 **Files:**
+
 - Create: `src/routes/auth/accept-terms/+page.server.ts`
 - Create: `src/routes/auth/accept-terms/+page.svelte`
 
@@ -291,7 +299,11 @@ function safeNext(raw: string | null): string {
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (isMockAuthMode()) redirect(303, '/');
-	if (!locals.user) redirect(303, `/auth/sign-in?callbackURL=${encodeURIComponent(safeNext(url.searchParams.get('next')))}`);
+	if (!locals.user)
+		redirect(
+			303,
+			`/auth/sign-in?callbackURL=${encodeURIComponent(safeNext(url.searchParams.get('next')))}`
+		);
 	if (!needsTermsAcceptance(locals.user as { termsAcceptedAt?: Date | null })) {
 		redirect(303, safeNext(url.searchParams.get('next')));
 	}
@@ -319,8 +331,10 @@ export const actions: Actions = {
 
 ```svelte
 <form method="POST" action="?/accept">
-  <label><input type="checkbox" name="agree" required /> 이용약관 및 개인정보 처리에 동의합니다.</label>
-  <button type="submit">동의하고 계속</button>
+	<label
+		><input type="checkbox" name="agree" required /> 이용약관 및 개인정보 처리에 동의합니다.</label
+	>
+	<button type="submit">동의하고 계속</button>
 </form>
 ```
 
@@ -338,6 +352,7 @@ git commit -m "feat(auth): accept-terms page for first-time users"
 ### Task 5: `/auth/sign-in` — 소셜 UI + 조건부 이메일 폼
 
 **Files:**
+
 - Modify: `src/routes/auth/sign-in/+page.server.ts`
 - Modify: `src/routes/auth/sign-in/+page.svelte`
 
@@ -399,6 +414,7 @@ git commit -m "feat(auth): mobile-first social sign-in UI"
 ### Task 6: `/invite/accept` 모바일 CTA 문구
 
 **Files:**
+
 - Modify: `src/routes/invite/accept/+page.svelte`
 
 - [ ] **Step 1: Update copy**
@@ -420,6 +436,7 @@ git commit -m "docs(ui): invite accept kakao-first CTA copy"
 ### Task 7: 환경·개발자 문서
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `docs/개발자가-처리할-항목.md`
 - Modify: `docs/session-handoff-and-status.md` (§0)
@@ -452,12 +469,12 @@ Expected: all PASS
 
 - [ ] **Step 2: Manual matrix (live + keys)**
 
-| # | Steps |
-|---|--------|
-| 1 | `AUTH_MODE=mock` — sign-in에 소셜 없음, 기존 mock 안내 |
-| 2 | `AUTH_MODE=live` + Kakao only env — 카카오 버튼만, 로그인 → accept-terms → `/` |
-| 3 | invite flow — createInvite → accept URL → sign-in with inviteEmail → Kakao → accept membership |
-| 4 | parent path — sign-in without inviteEmail — 소셜만 + 안내 문구 |
+| #   | Steps                                                                                          |
+| --- | ---------------------------------------------------------------------------------------------- |
+| 1   | `AUTH_MODE=mock` — sign-in에 소셜 없음, 기존 mock 안내                                         |
+| 2   | `AUTH_MODE=live` + Kakao only env — 카카오 버튼만, 로그인 → accept-terms → `/`                 |
+| 3   | invite flow — createInvite → accept URL → sign-in with inviteEmail → Kakao → accept membership |
+| 4   | parent path — sign-in without inviteEmail — 소셜만 + 안내 문구                                 |
 
 - [ ] **Step 3: inferred-decisions-log** — “구현 완료” + 검증 명령
 
@@ -472,16 +489,16 @@ git commit -m "docs: log live OAuth implementation complete"
 
 ## Spec coverage checklist
 
-| Spec § | Task |
-|--------|------|
-| 소셜 3종 | Task 1–2, 5 |
-| 모바일 sign-in | Task 5 |
-| 약관 1회 | Task 3–4, 5 |
-| 스태프 이메일 초대 | Task 5–6 (기존 플로) |
-| inviteEmail 시 이메일·비번 | Task 5 |
-| mock 분리 | Task 5 |
-| env·체크리스트 | Task 7 |
-| SMS·대기 | Out of scope |
+| Spec §                     | Task                 |
+| -------------------------- | -------------------- |
+| 소셜 3종                   | Task 1–2, 5          |
+| 모바일 sign-in             | Task 5               |
+| 약관 1회                   | Task 3–4, 5          |
+| 스태프 이메일 초대         | Task 5–6 (기존 플로) |
+| inviteEmail 시 이메일·비번 | Task 5               |
+| mock 분리                  | Task 5               |
+| env·체크리스트             | Task 7               |
+| SMS·대기                   | Out of scope         |
 
 ## Self-review
 

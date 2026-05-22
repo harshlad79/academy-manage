@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types';
+	import type { ActionData } from './$types';
 
-	let { form }: { data: PageData; form?: ActionData } = $props();
+	let { form }: { form?: ActionData } = $props();
 </script>
 
 <section class="mx-auto max-w-md px-4 py-16">
@@ -17,11 +17,7 @@
 	<form method="POST" action="?/accept" class="mt-6 space-y-4">
 		<label class="flex items-start gap-2 text-sm text-gray-700">
 			<input type="checkbox" name="agree" required class="mt-0.5" />
-			<span>
-				<a href="/legal/terms" class="text-indigo-600 underline">서비스 이용약관</a> 및
-				<a href="/legal/privacy" class="text-indigo-600 underline">개인정보 처리방침</a>에
-				동의합니다.
-			</span>
+			<span>서비스 이용약관 및 개인정보 처리방침에 동의합니다.</span>
 		</label>
 		<button
 			type="submit"

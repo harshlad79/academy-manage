@@ -22,6 +22,17 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-19 — Live 소셜 OAuth 구현
+
+- **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md), [plans/2026-05-19-live-oauth.md](superpowers/plans/2026-05-19-live-oauth.md).
+- **추론한 결정**:
+  - **`auth-social.ts`**: env 있는 제공자만 `socialProviders` 등록.
+  - **`terms-gate` + `/auth/accept-terms`**: live 최초 약관; Mongo 폴백으로 `termsAcceptedAt` 갱신.
+  - **`/auth/sign-in`**: 모바일 소셜 우선; `inviteEmail` 시만 이메일·비밀번호.
+  - **초대 수락 UI**: live 시 「카카오로 계속」 CTA.
+  - **SMS·전화 초대·대기 큐** 후속.
+- **검증**: `npm run check` · `npm test`(52) · `npm run lint` · `npm run build`.
+
 ### 2026-05-19 — Live 소셜 OAuth 설계 (brainstorming 승인)
 
 - **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md).
@@ -30,7 +41,7 @@
   - **스태프** 이메일 초대·수락 시 **이메일 엄격 일치**; **학부모** 일반 가입은 소셜만·`ParentStudentLink` 연결.
   - **약관** 최초 가입 1회; `inviteEmail` 있을 때만 이메일·비밀번호 보조 UI.
   - **SMS·전화 초대·대기 대시보드**는 본 구현 범위 밖(후속 스펙).
-- **검증**: 구현 전 설계만; 구현 후 `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+- **검증**: 구현 완료 항목 위 참조.
 
 ### 2026-05-15 — 비가입자 가입·로그인 후 `/invite/accept` 복귀
 

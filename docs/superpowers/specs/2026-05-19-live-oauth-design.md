@@ -35,18 +35,18 @@
 
 ## 2. 합의된 제품 결정
 
-| 항목 | 결정 |
-|------|------|
-| 소셜 제공자 | **카카오·네이버·구글 동시** (Better Auth 내장) |
-| 스태프 초대 수락 | 세션 `user.email` **=** 초대 `email` (정규화 후, **엄격 일치**) |
-| 학부모 | `/auth/sign-in` **소셜만** (일반 경로); 연결은 스태프가 `ParentStudentLink` |
-| 학부모 이메일 초대 | **비권장**; 플랫폼 `parent` 초대 UI 정리는 **SMS 스펙**에서 |
-| 약관 | **최초 가입 1회**; 재로그인·초대 수락 시 스킵 |
-| 로그인 UI | **`inviteEmail` 있을 때만** 이메일·비밀번호 보조; 없으면 **소셜만** |
-| 이메일·비밀번호 | live에서 **유지** (스태프 초대·로컬 검증); 소셜과 병행 |
-| mock | 변경 없음; live 소셜 경로는 mock에서 **비노출** |
-| SMS·전화 초대 | **다음 스펙** |
-| 대기·리드 대시보드 | **제외** (C) |
+| 항목               | 결정                                                                        |
+| ------------------ | --------------------------------------------------------------------------- |
+| 소셜 제공자        | **카카오·네이버·구글 동시** (Better Auth 내장)                              |
+| 스태프 초대 수락   | 세션 `user.email` **=** 초대 `email` (정규화 후, **엄격 일치**)             |
+| 학부모             | `/auth/sign-in` **소셜만** (일반 경로); 연결은 스태프가 `ParentStudentLink` |
+| 학부모 이메일 초대 | **비권장**; 플랫폼 `parent` 초대 UI 정리는 **SMS 스펙**에서                 |
+| 약관               | **최초 가입 1회**; 재로그인·초대 수락 시 스킵                               |
+| 로그인 UI          | **`inviteEmail` 있을 때만** 이메일·비밀번호 보조; 없으면 **소셜만**         |
+| 이메일·비밀번호    | live에서 **유지** (스태프 초대·로컬 검증); 소셜과 병행                      |
+| mock               | 변경 없음; live 소셜 경로는 mock에서 **비노출**                             |
+| SMS·전화 초대      | **다음 스펙**                                                               |
+| 대기·리드 대시보드 | **제외** (C)                                                                |
 
 ---
 
@@ -72,14 +72,14 @@ super_admin   시드·플랫폼 수동 멤버십 (AcademyInvite 토큰 대상 �
 
 ### 4.1 구성
 
-| 파일·경로 | 책임 |
-|-----------|------|
-| `src/lib/server/auth.ts` | `socialProviders`: kakao, naver, google; `emailAndPassword.enabled: true` |
-| `src/hooks.server.ts` | live: `svelteKitHandler`, `getSession` → `locals.user` |
-| `src/lib/auth-client.ts` | `PUBLIC_BETTER_AUTH_URL`, `signIn.social`, `signUp.email` |
-| `src/lib/server/invite-return.ts` | `sanitizeInviteCallbackURL` (`pathname === '/invite/accept'`) |
-| `src/routes/auth/sign-in/*` | 모바일 소셜 UI, 약관, 초대 시 보조 폼 |
-| `src/routes/invite/accept/*` | 토큰·`acceptUi`·`consumeAcademyInviteForLoggedInUser` |
+| 파일·경로                         | 책임                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| `src/lib/server/auth.ts`          | `socialProviders`: kakao, naver, google; `emailAndPassword.enabled: true` |
+| `src/hooks.server.ts`             | live: `svelteKitHandler`, `getSession` → `locals.user`                    |
+| `src/lib/auth-client.ts`          | `PUBLIC_BETTER_AUTH_URL`, `signIn.social`, `signUp.email`                 |
+| `src/lib/server/invite-return.ts` | `sanitizeInviteCallbackURL` (`pathname === '/invite/accept'`)             |
+| `src/routes/auth/sign-in/*`       | 모바일 소셜 UI, 약관, 초대 시 보조 폼                                     |
+| `src/routes/invite/accept/*`      | 토큰·`acceptUi`·`consumeAcademyInviteForLoggedInUser`                     |
 
 ### 4.2 스태프 초대 데이터 흐름
 
@@ -157,13 +157,13 @@ Redirect URI (개발자 체크리스트 §1):
 
 ## 7. 에러·엣지
 
-| 상황 | 처리 |
-|------|------|
-| 소셜 이메일 ≠ 초대 이메일 | `email_mismatch` + 카카오 계정 이메일 안내 |
-| 세션에 이메일 없음 | `no_session_email` + 제공자 scope 안내 |
-| OAuth env 미설정 | sign-in에 live 미구성 안내; mock으로 데모 |
-| 약관 미동의 | 가입·OAuth 콜백 차단 |
-| callbackURL 조작 | `sanitizeInviteCallbackURL` — `/invite/accept` 만 |
+| 상황                      | 처리                                              |
+| ------------------------- | ------------------------------------------------- |
+| 소셜 이메일 ≠ 초대 이메일 | `email_mismatch` + 카카오 계정 이메일 안내        |
+| 세션에 이메일 없음        | `no_session_email` + 제공자 scope 안내            |
+| OAuth env 미설정          | sign-in에 live 미구성 안내; mock으로 데모         |
+| 약관 미동의               | 가입·OAuth 콜백 차단                              |
+| callbackURL 조작          | `sanitizeInviteCallbackURL` — `/invite/accept` 만 |
 
 ---
 
@@ -175,19 +175,19 @@ Redirect URI (개발자 체크리스트 §1):
 
 ### 수동
 
-| 시나리오 | 모드 |
-|----------|------|
-| mock 회귀 | `AUTH_MODE=mock` |
-| 소셜 로그인 3종 | live + 키 |
-| 초대 → 카카오 → 수락 | live |
-| 학부모 소셜 가입 → `/p` 연결 대기 | live |
-| `inviteEmail` 없음 → 소셜만 UI | live |
+| 시나리오                          | 모드             |
+| --------------------------------- | ---------------- |
+| mock 회귀                         | `AUTH_MODE=mock` |
+| 소셜 로그인 3종                   | live + 키        |
+| 초대 → 카카오 → 수락              | live             |
+| 학부모 소셜 가입 → `/p` 연결 대기 | live             |
+| `inviteEmail` 없음 → 소셜만 UI    | live             |
 
 ### 롤아웃
 
-1. 로컬 live + 3종 키  
-2. 스테이징 Redirect URI  
-3. 프로덕션: 체크리스트 §1·§2 후  
+1. 로컬 live + 3종 키
+2. 스테이징 Redirect URI
+3. 프로덕션: 체크리스트 §1·§2 후
 
 SMTP 초대와 **독립** 배포 가능.
 
@@ -195,11 +195,11 @@ SMTP 초대와 **독립** 배포 가능.
 
 ## 9. 문서·후속
 
-| 문서 | 작업 |
-|------|------|
-| `docs/개발자가-처리할-항목.md` | §1 env 이름·Redirect URI 예시 동기화 |
-| `docs/inferred-decisions-log.md` | 본 설계 요약 1항목 |
-| `docs/session-handoff-and-status.md` §0 | live OAuth 한 줄 (구현 후) |
+| 문서                                    | 작업                                 |
+| --------------------------------------- | ------------------------------------ |
+| `docs/개발자가-처리할-항목.md`          | §1 env 이름·Redirect URI 예시 동기화 |
+| `docs/inferred-decisions-log.md`        | 본 설계 요약 1항목                   |
+| `docs/session-handoff-and-status.md` §0 | live OAuth 한 줄 (구현 후)           |
 
 **구현 접근**: Better Auth 내장 `socialProviders` (generic OAuth 커스텀·소셜 전용 제거는 채택하지 않음).
 
