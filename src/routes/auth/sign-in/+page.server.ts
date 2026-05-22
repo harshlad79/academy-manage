@@ -1,4 +1,5 @@
-import { isMockAuthMode } from '$lib/server/auth';
+import { env } from '$env/dynamic/private';
+import { isMockAuthMode, listEnabledSocialProviders } from '$lib/server/auth';
 import { sanitizeInviteCallbackURL, splitAppPath } from '$lib/server/invite-return';
 import { mockUserIdForInviteEmail } from '$lib/server/mock-invite-auth';
 import type { PageServerLoad } from './$types';
@@ -19,6 +20,16 @@ export const load: PageServerLoad = async ({ url }) => {
 				: '',
 		inviteEmail,
 		isMock,
+		liveSocial: !isMock
+			? listEnabledSocialProviders({
+					KAKAO_CLIENT_ID: env.KAKAO_CLIENT_ID,
+					KAKAO_CLIENT_SECRET: env.KAKAO_CLIENT_SECRET,
+					NAVER_CLIENT_ID: env.NAVER_CLIENT_ID,
+					NAVER_CLIENT_SECRET: env.NAVER_CLIENT_SECRET,
+					GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+					GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET
+				})
+			: [],
 		mockUserId,
 		mockProfiles: isMock
 			? [

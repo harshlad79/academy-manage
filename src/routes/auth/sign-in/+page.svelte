@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { authClient } from '$lib/auth-client';
+	import type { SocialProviderId } from '$lib/server/auth-social';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -20,8 +21,46 @@
 
 	const inviteReturnPath = $derived(`${data.callbackPathname}${data.callbackSearch}`);
 
+	const socialOrder: SocialProviderId[] = ['kakao', 'naver', 'google'];
+	const orderedLiveSocial = $derived(
+		socialOrder.filter((provider) => data.liveSocial.includes(provider))
+	);
+
+	const providerLabels: Record<SocialProviderId, string> = {
+		kakao: '카카오로 계속',
+		naver: '네이버로 계속',
+		google: 'Google로 계속'
+	};
+
+	function socialButtonClass(provider: SocialProviderId): string {
+		const base = 'w-full rounded-md px-4 py-3 text-sm font-medium disabled:opacity-60';
+		switch (provider) {
+			case 'kakao':
+				return `${base} bg-[#FEE500] text-gray-900 hover:bg-[#f5dc00]`;
+			case 'naver':
+				return `${base} bg-[#03C75A] text-white hover:bg-[#02b351]`;
+			case 'google':
+				return `${base} border border-gray-300 bg-white text-gray-800 hover:bg-gray-50`;
+		}
+	}
+
 	function submitReturnToAcceptForm() {
 		returnToAcceptForm?.requestSubmit();
+	}
+
+	async function signInWith(provider: SocialProviderId) {
+		clientError = null;
+		busy = true;
+		try {
+			await authClient.signIn.social({
+				provider,
+				callbackURL: data.inviteEmail ? inviteReturnPath : '/'
+			});
+		} catch {
+			clientError = '소셜 로그인을 시작하지 못했습니다.';
+		} finally {
+			busy = false;
+		}
 	}
 
 	async function submitSignIn() {
@@ -104,26 +143,26 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="mt-6 flex gap-2 border-b border-gray-200">
-			<button
-				type="button"
-				class="border-b-2 px-3 py-2 text-sm font-medium {mode === 'sign-in'
-					? 'border-indigo-600 text-indigo-700'
-					: 'border-transparent text-gray-600'}"
-				onclick={() => (mode = 'sign-in')}
+		{#if data.liveSocial.length === 0}
+			<div
+				class="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
 			>
-				로그인
-			</button>
-			<button
-				type="button"
-				class="border-b-2 px-3 py-2 text-sm font-medium {mode === 'sign-up'
-					? 'border-indigo-600 text-indigo-700'
-					: 'border-transparent text-gray-600'}"
-				onclick={() => (mode = 'sign-up')}
-			>
-				가입
-			</button>
-		</div>
+				OAuth 키 미설정 — mock 또는 <code class="font-mono">.env</code> 참고
+			</div>
+		{:else}
+			<div class="mt-6 space-y-3">
+				{#each orderedLiveSocial as provider (provider)}
+					<button
+						type="button"
+						disabled={busy}
+						class={socialButtonClass(provider)}
+						onclick={() => void signInWith(provider)}
+					>
+						{providerLabels[provider]}
+					</button>
+				{/each}
+			</div>
+		{/if}
 
 		{#if clientError}
 			<p class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
@@ -131,71 +170,100 @@
 			</p>
 		{/if}
 
-		<form
-			class="mt-6 space-y-4"
-			onsubmit={(e) => {
-				e.preventDefault();
-				if (mode === 'sign-in') void submitSignIn();
-				else void submitSignUp();
-			}}
-		>
-			{#if mode === 'sign-up'}
+		{#if data.inviteEmail}
+			<div class="mt-6 flex gap-2 border-b border-gray-200">
+				<button
+					type="button"
+					class="border-b-2 px-3 py-2 text-sm font-medium {mode === 'sign-in'
+						? 'border-indigo-600 text-indigo-700'
+						: 'border-transparent text-gray-600'}"
+					onclick={() => (mode = 'sign-in')}
+				>
+					로그인
+				</button>
+				<button
+					type="button"
+					class="border-b-2 px-3 py-2 text-sm font-medium {mode === 'sign-up'
+						? 'border-indigo-600 text-indigo-700'
+						: 'border-transparent text-gray-600'}"
+					onclick={() => (mode = 'sign-up')}
+				>
+					가입
+				</button>
+			</div>
+
+			<form
+				class="mt-6 space-y-4"
+				onsubmit={(e) => {
+					e.preventDefault();
+					if (mode === 'sign-in') void submitSignIn();
+					else void submitSignUp();
+				}}
+			>
+				{#if mode === 'sign-up'}
+					<div>
+						<label for="auth-name" class="block text-xs font-medium text-gray-600">이름</label>
+						<input
+							id="auth-name"
+							type="text"
+							class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+							bind:value={name}
+							autocomplete="name"
+						/>
+					</div>
+				{/if}
 				<div>
-					<label for="auth-name" class="block text-xs font-medium text-gray-600">이름</label>
+					<label for="auth-email" class="block text-xs font-medium text-gray-600">이메일</label>
 					<input
-						id="auth-name"
-						type="text"
+						id="auth-email"
+						type="email"
+						required
 						class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
-						bind:value={name}
-						autocomplete="name"
+						bind:value={email}
+						autocomplete="email"
+						readonly={!!data.inviteEmail}
 					/>
 				</div>
-			{/if}
-			<div>
-				<label for="auth-email" class="block text-xs font-medium text-gray-600">이메일</label>
-				<input
-					id="auth-email"
-					type="email"
-					required
-					class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
-					bind:value={email}
-					autocomplete="email"
-					readonly={!!data.inviteEmail}
-				/>
-			</div>
-			<div>
-				<label for="auth-password" class="block text-xs font-medium text-gray-600">비밀번호</label>
-				<input
-					id="auth-password"
-					type="password"
-					required
-					minlength="8"
-					class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
-					bind:value={password}
-					autocomplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-				/>
-			</div>
-			<button
-				type="submit"
-				disabled={busy}
-				class="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
-			>
-				{busy ? '처리 중…' : mode === 'sign-in' ? '로그인 후 돌아가기' : '가입 후 돌아가기'}
-			</button>
-		</form>
-
-		{#if data.callbackToken}
-			<form
-				bind:this={returnToAcceptForm}
-				method="GET"
-				action={resolve('/invite/accept')}
-				class="mt-4 text-xs text-gray-500"
-			>
-				<input type="hidden" name="token" value={data.callbackToken} />
-				<span>완료 후 </span>
-				<button type="submit" class="text-indigo-600 underline">초대 수락 페이지</button>
-				<span>에서 수락 버튼을 누르세요.</span>
+				<div>
+					<label for="auth-password" class="block text-xs font-medium text-gray-600">비밀번호</label
+					>
+					<input
+						id="auth-password"
+						type="password"
+						required
+						minlength="8"
+						class="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm"
+						bind:value={password}
+						autocomplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+					/>
+				</div>
+				<button
+					type="submit"
+					disabled={busy}
+					class="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+				>
+					{busy ? '처리 중…' : mode === 'sign-in' ? '로그인 후 돌아가기' : '가입 후 돌아가기'}
+				</button>
 			</form>
+
+			{#if data.callbackToken}
+				<form
+					bind:this={returnToAcceptForm}
+					method="GET"
+					action={resolve('/invite/accept')}
+					class="mt-4 text-xs text-gray-500"
+				>
+					<input type="hidden" name="token" value={data.callbackToken} />
+					<span>완료 후 </span>
+					<button type="submit" class="text-indigo-600 underline">초대 수락 페이지</button>
+					<span>에서 수락 버튼을 누르세요.</span>
+				</form>
+			{/if}
+		{:else}
+			<p class="mt-6 text-sm text-gray-600">
+				자녀 연결 후 학부모 포털(<code class="font-mono">/p</code>)을 이용할 수 있습니다. 학원에서
+				자녀 연결을 요청하세요.
+			</p>
 		{/if}
 	{/if}
 </section>
