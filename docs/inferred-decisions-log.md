@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-19 — Live 소셜 OAuth 설계 (brainstorming 승인)
+
+- **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md).
+- **추론한 결정**:
+  - **소셜 3종 동시**(카카오·네이버·구글); mock은 소셜 비노출.
+  - **스태프** 이메일 초대·수락 시 **이메일 엄격 일치**; **학부모** 일반 가입은 소셜만·`ParentStudentLink` 연결.
+  - **약관** 최초 가입 1회; `inviteEmail` 있을 때만 이메일·비밀번호 보조 UI.
+  - **SMS·전화 초대·대기 대시보드**는 본 구현 범위 밖(후속 스펙).
+- **검증**: 구현 전 설계만; 구현 후 `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-15 — 비가입자 가입·로그인 후 `/invite/accept` 복귀
 
 - **맥락**: 초대 수락 UI에서 `need_login`·`email_mismatch` 시 인증 유도; live는 Better Auth 이메일·비밀번호, mock은 `AUTH_MOCK_USER_ID` 안내.
