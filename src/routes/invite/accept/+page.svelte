@@ -52,9 +52,14 @@
 					type="submit"
 					class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
 				>
-					{data.isMockAuth ? '목업 로그인 안내' : '로그인 · 가입'}
+					{data.isMockAuth ? '목업 로그인 안내' : '카카오로 계속'}
 				</button>
 			</form>
+			{#if !data.isMockAuth}
+				<p class="mt-3 text-xs text-gray-600">
+					네이버·구글도 가능. 초대 이메일과 같은 소셜 계정으로 로그인하세요.
+				</p>
+			{/if}
 			{#if data.isMockAuth && data.mockUserIdHint}
 				<p class="mt-3 text-xs text-gray-600">
 					목업: <code class="font-mono">AUTH_MOCK_USER_ID={data.mockUserIdHint}</code> 로 서버 재시작
@@ -84,9 +89,14 @@
 					type="submit"
 					class="rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
 				>
-					다른 계정으로 로그인 · 가입
+					{data.isMockAuth ? '다른 계정으로 로그인 · 가입' : '카카오로 계속'}
 				</button>
 			</form>
+			{#if !data.isMockAuth}
+				<p class="mt-3 text-xs text-gray-600">
+					네이버·구글도 가능. 초대 이메일과 같은 소셜 계정으로 로그인하세요.
+				</p>
+			{/if}
 		{:else}
 			<form method="POST" action="?/acceptInvite" class="mt-8 space-y-4">
 				<input type="hidden" name="token" value={data.token} />
