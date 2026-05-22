@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-15 — **`/auth/sign-in`**: live 시 이메일 로그인·가입 후 `callbackURL`로 `/invite/accept` 복귀; mock은 `AUTH_MOCK_USER_ID` 안내. 직전: **초대 메일**(네이버 SMTP)·`resendInvite`·`lastEmailSentAt`/`lastEmailError`.
+**최근 동기화**: 2026-05-19 — **live OAuth**: 카카오·네이버·구글 3종, 모바일 `/auth/sign-in` 소셜 우선, 최초 가입 **`/auth/accept-terms`**; mock은 소셜 비노출·`AUTH_MOCK_USER_ID` 안내. 직전: live 이메일 로그인·초대 `callbackURL` 복귀, **초대 메일**(SMTP).
 
 ### 프로젝트·스택
 
