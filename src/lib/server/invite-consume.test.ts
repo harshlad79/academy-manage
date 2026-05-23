@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { consumeInviteFailureMessage, type ConsumeInviteResult } from './invite-consume';
+import {
+	consumeInviteFailureMessage,
+	invitePhoneLast4,
+	resolveInviteAcceptUi,
+	type ConsumeInviteResult
+} from './invite-consume';
 
 function err(
 	code: Extract<ConsumeInviteResult, { ok: false }>['code'],
@@ -8,6 +13,29 @@ function err(
 ): Extract<ConsumeInviteResult, { ok: false }> {
 	return message !== undefined ? { ok: false, code, message } : { ok: false, code };
 }
+
+describe('resolveInviteAcceptUi', () => {
+	it('parent는 로그인만 있으면 can_accept', () => {
+		expect(resolveInviteAcceptUi({ email: null }, { role: 'parent' })).toBe('can_accept');
+		expect(resolveInviteAcceptUi(null, { role: 'parent' })).toBe('need_login');
+	});
+
+	it('teacher는 email 일치 필요', () => {
+		expect(resolveInviteAcceptUi({ email: 'a@b.co' }, { role: 'teacher', email: 'a@b.co' })).toBe(
+			'can_accept'
+		);
+		expect(resolveInviteAcceptUi({ email: 'x@b.co' }, { role: 'teacher', email: 'a@b.co' })).toBe(
+			'email_mismatch'
+		);
+	});
+});
+
+describe('invitePhoneLast4', () => {
+	it('끝 4자리', () => {
+		expect(invitePhoneLast4('01012345678')).toBe('5678');
+		expect(invitePhoneLast4('')).toBe(null);
+	});
+});
 
 describe('consumeInviteFailureMessage', () => {
 	it('코드별 한국어 메시지', () => {

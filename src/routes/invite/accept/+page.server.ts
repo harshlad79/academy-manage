@@ -2,29 +2,17 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import { buildInviteAcceptReturnPath } from '$lib/server/invite-return';
 import { isMockAuthMode } from '$lib/server/auth';
-import { mockUserIdForInviteEmail } from '$lib/server/mock-invite-auth';
-import connectDB from '$lib/server/db';
 import {
 	consumeAcademyInviteForLoggedInUser,
-	consumeInviteFailureMessage
+	consumeInviteFailureMessage,
+	invitePhoneLast4,
+	resolveInviteAcceptUi
 } from '$lib/server/invite-consume';
+import { mockUserIdForInviteEmail } from '$lib/server/mock-invite-auth';
+import connectDB from '$lib/server/db';
 import { Academy } from '$lib/server/models/academy';
-import {
-	AcademyInvite,
-	normalizeInviteEmail,
-	type AcademyInviteRole
-} from '$lib/server/models/academy-invite';
+import { AcademyInvite, type AcademyInviteRole } from '$lib/server/models/academy-invite';
 import type { Actions, PageServerLoad } from './$types';
-
-type AcceptUi = 'can_accept' | 'need_login' | 'email_mismatch' | 'no_session_email';
-
-function resolveAcceptUi(user: App.Locals['user'], inviteEmail: string): AcceptUi {
-	if (!user) return 'need_login';
-	const n = normalizeInviteEmail(user.email ?? '');
-	if (!n) return 'no_session_email';
-	if (n !== inviteEmail) return 'email_mismatch';
-	return 'can_accept';
-}
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const token = url.searchParams.get('token')?.trim() ?? '';
@@ -36,23 +24,32 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	if (!inv) {
 		return { kind: 'invalid' as const };
 	}
+	const role = inv.role as AcademyInviteRole;
+	const isParentInvite = role === 'parent';
 	if (inv.expiresAt.getTime() < Date.now()) {
-		return { kind: 'expired' as const, email: inv.email };
+		return {
+			kind: 'expired' as const,
+			isParentInvite,
+			email: inv.email ?? null,
+			phoneLast4: invitePhoneLast4(inv.phone)
+		};
 	}
 	const academy = await Academy.findById(inv.academyId).select('name status').lean();
-	const acceptUi = resolveAcceptUi(locals.user, inv.email);
+	const acceptUi = resolveInviteAcceptUi(locals.user, { role, email: inv.email });
 	const returnPath = buildInviteAcceptReturnPath(token);
 	return {
 		kind: 'ok' as const,
 		token,
-		email: inv.email,
-		role: inv.role as AcademyInviteRole,
+		isParentInvite,
+		email: inv.email ?? null,
+		phoneLast4: invitePhoneLast4(inv.phone),
+		role,
 		academyName: academy?.name ?? '학원',
 		academyStatus: academy?.status ?? 'unknown',
 		acceptUi,
 		inviteReturnPath: returnPath,
 		isMockAuth: isMockAuthMode(),
-		mockUserIdHint: isMockAuthMode() ? mockUserIdForInviteEmail(inv.email) : null
+		mockUserIdHint: isMockAuthMode() && inv.email ? mockUserIdForInviteEmail(inv.email) : null
 	};
 };
 
@@ -65,10 +62,11 @@ export const actions: Actions = {
 		const fd = await request.formData();
 		const token = fd.get('token')?.toString() ?? '';
 		await connectDB();
+		const invBefore = await AcademyInvite.findOne({ token: token.trim() }).lean();
 		const result = await consumeAcademyInviteForLoggedInUser(token, uid, locals.user?.email);
 		if (!result.ok) {
 			return fail(400, { error: consumeInviteFailureMessage(result) });
 		}
-		redirect(303, '/');
+		redirect(303, invBefore?.role === 'parent' ? '/p' : '/');
 	}
 };

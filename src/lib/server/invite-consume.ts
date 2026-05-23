@@ -1,7 +1,11 @@
 import { Types } from 'mongoose';
 
 import { isMockAuthMode, liveBetterAuthUserExists } from '$lib/server/auth';
-import { AcademyInvite, normalizeInviteEmail } from '$lib/server/models/academy-invite';
+import {
+	AcademyInvite,
+	normalizeInviteEmail,
+	type AcademyInviteRole
+} from '$lib/server/models/academy-invite';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { assertTeacherLinkValid } from '$lib/server/teacher-membership-link';
 
@@ -20,6 +24,25 @@ export type ConsumeInviteResult =
 				| 'live_user_missing';
 			message?: string;
 	  };
+
+export type InviteAcceptUi = 'can_accept' | 'need_login' | 'email_mismatch' | 'no_session_email';
+
+export function resolveInviteAcceptUi(
+	user: { email?: string | null } | null | undefined,
+	invite: { role: AcademyInviteRole; email?: string | null }
+): InviteAcceptUi {
+	if (!user) return 'need_login';
+	if (invite.role === 'parent') return 'can_accept';
+	const sessionEmail = normalizeInviteEmail(user.email ?? '');
+	if (!sessionEmail) return 'no_session_email';
+	if ((invite.email ?? '') !== sessionEmail) return 'email_mismatch';
+	return 'can_accept';
+}
+
+export function invitePhoneLast4(phone: string | undefined): string | null {
+	if (!phone || phone.length < 4) return null;
+	return phone.slice(-4);
+}
 
 export function consumeInviteFailureMessage(
 	r: Extract<ConsumeInviteResult, { ok: false }>
@@ -48,7 +71,7 @@ export function consumeInviteFailureMessage(
 
 /**
  * 로그인 세션 사용자가 초대 토큰을 수락해 `AcademyMembership` 을 만든다.
- * 이메일은 초대에 기록된 값과 세션 `user.email` 정규화 비교로만 검증한다.
+ * 스태ff: 이메일 엄격 일치. 학부모: 토큰·만료·중복만 검사.
  */
 export async function consumeAcademyInviteForLoggedInUser(
 	tokenRaw: string,
@@ -59,10 +82,6 @@ export async function consumeAcademyInviteForLoggedInUser(
 	if (!token) {
 		return { ok: false, code: 'missing_token' };
 	}
-	const sessionEmail = normalizeInviteEmail(userEmailRaw ?? '');
-	if (!sessionEmail) {
-		return { ok: false, code: 'no_session_email' };
-	}
 	const inv = await AcademyInvite.findOne({ token }).lean();
 	if (!inv) {
 		return { ok: false, code: 'invalid' };
@@ -70,8 +89,18 @@ export async function consumeAcademyInviteForLoggedInUser(
 	if (inv.expiresAt.getTime() < Date.now()) {
 		return { ok: false, code: 'expired' };
 	}
-	if (inv.email !== sessionEmail) {
-		return { ok: false, code: 'email_mismatch' };
+	if (inv.role === 'parent') {
+		if (!inv.phone) {
+			return { ok: false, code: 'invalid' };
+		}
+	} else {
+		const sessionEmail = normalizeInviteEmail(userEmailRaw ?? '');
+		if (!sessionEmail) {
+			return { ok: false, code: 'no_session_email' };
+		}
+		if ((inv.email ?? '') !== sessionEmail) {
+			return { ok: false, code: 'email_mismatch' };
+		}
 	}
 	if (!isMockAuthMode()) {
 		const exists = await liveBetterAuthUserExists(userId);
