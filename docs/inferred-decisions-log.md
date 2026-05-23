@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-19 — 학부모 SMS 초대·보호자 연락처 구현
+
+- **맥락**: [docs/superpowers/specs/2026-05-19-invite-sms-phone-design.md](superpowers/specs/2026-05-19-invite-sms-phone-design.md), [plans/2026-05-19-invite-sms-phone.md](superpowers/plans/2026-05-19-invite-sms-phone.md).
+- **추론한 결정**:
+  - **`AcademyInvite`**: parent는 `phone`만, 스태ff는 `email`만; 수락 parent는 **토큰-only**.
+  - **`invite-sms.ts`**: `INVITE_SMS_ENABLED` 스텁; 미설정 시 URL 복사.
+  - **`Student.guardianPhone`**, 학생 편집·플랫폼 멤버 SMS UI; **`/p/settings`** 연락·SMS 동의.
+- **대안(포기)**: OAuth 전화 엄격 일치, SMS OTP, 실 알리고·솔라피 HTTP(후속).
+- **검증**: `npm run check` → `npm test` → `npm run lint` → `npm run build`.
+
 ### 2026-05-19 — Live 소셜 OAuth 구현
 
 - **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md), [plans/2026-05-19-live-oauth.md](superpowers/plans/2026-05-19-live-oauth.md).
