@@ -1,5 +1,13 @@
+import type { Types } from 'mongoose';
+
 import { formatSeoulDateString } from '$lib/server/date-seoul';
-import { truncateInviteMailError } from '$lib/server/invite-mail';
+import {
+	buildInviteAcceptUrl,
+	resolveInviteMailOrigin,
+	truncateInviteMailError,
+	type InviteMailEnv
+} from '$lib/server/invite-mail';
+import { applyInviteSmsMeta } from '$lib/server/invite-sms-meta';
 
 export type InviteSmsPayload = {
 	to: string;
@@ -49,8 +57,7 @@ export async function sendAcademyInviteSms(
 		return { status: 'skipped', reason };
 	}
 	try {
-		// eslint-disable-next-line no-console -- 운영 전 스텁: 발송 본문 확인용
-		console.info('[invite-sms stub]', payload.to, buildSmsBody(payload));
+		void buildSmsBody(payload);
 		return { status: 'sent' };
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
@@ -75,10 +82,7 @@ export function inviteSmsNoticeMessage(notice: string | null): string | null {
 	}
 }
 
-export function inviteSmsResultNotice(
-	result: InviteSmsResult,
-	kind: 'create' | 'resend'
-): string {
+export function inviteSmsResultNotice(result: InviteSmsResult, kind: 'create' | 'resend'): string {
 	if (result.status === 'sent') {
 		return kind === 'create' ? 'invite_sms_sent' : 'invite_sms_resent_ok';
 	}
@@ -86,4 +90,24 @@ export function inviteSmsResultNotice(
 		return 'invite_sms_skipped';
 	}
 	return kind === 'create' ? 'invite_sms_failed' : 'invite_sms_resent_failed';
+}
+
+export async function dispatchInviteSms(
+	inviteId: Types.ObjectId,
+	academyName: string,
+	phone: string,
+	token: string,
+	expiresAt: Date,
+	requestOrigin: string,
+	kind: 'create' | 'resend'
+): Promise<string> {
+	const mailEnv = process.env as InviteMailEnv & InviteSmsEnv;
+	const originBase = resolveInviteMailOrigin(mailEnv, requestOrigin);
+	const acceptUrl = buildInviteAcceptUrl(originBase, token);
+	const smsResult = await sendAcademyInviteSms(
+		{ to: phone, academyName, acceptUrl, expiresAt },
+		{ env: mailEnv }
+	);
+	await applyInviteSmsMeta(inviteId, smsResult);
+	return inviteSmsResultNotice(smsResult, kind);
 }
