@@ -56,6 +56,16 @@ export function normalizeInviteEmail(raw: string): string | null {
 	return s;
 }
 
+/** 한국 휴대(010) — 하이픈·공백 제거, `010` + 8자리(총 11자). */
+export function normalizeInvitePhone(raw: string): string | null {
+	let s = raw.trim().replace(/[\s-]/g, '');
+	if (s.startsWith('+82')) {
+		s = `0${s.slice(3)}`;
+	}
+	if (!/^010\d{8}$/.test(s)) return null;
+	return s;
+}
+
 export function generateInviteToken(): string {
 	return randomBytes(32).toString('hex');
 }
