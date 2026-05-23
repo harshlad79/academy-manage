@@ -21,6 +21,16 @@
 		</p>
 	{/if}
 
+	{#if data.noticeMessage}
+		<p
+			class="mt-4 rounded-md border px-4 py-3 text-sm {data.noticeMessage.includes('실패')
+				? 'border-amber-200 bg-amber-50 text-amber-950'
+				: 'border-emerald-200 bg-emerald-50 text-emerald-950'}"
+		>
+			{data.noticeMessage}
+		</p>
+	{/if}
+
 	<form method="POST" action="?/update" class="mt-6 space-y-4">
 		<div>
 			<label for="name" class="block text-sm font-medium text-gray-700">이름</label>
@@ -44,6 +54,32 @@
 				placeholder="예: 고1"
 			/>
 		</div>
+		<div>
+			<label for="guardianName" class="block text-sm font-medium text-gray-700">보호자 이름</label>
+			<input
+				id="guardianName"
+				name="guardianName"
+				maxlength="80"
+				value={data.student.guardianName}
+				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+				placeholder="선택"
+			/>
+		</div>
+		<div>
+			<label for="guardianPhone" class="block text-sm font-medium text-gray-700"
+				>보호자 휴대번호</label
+			>
+			<input
+				id="guardianPhone"
+				name="guardianPhone"
+				type="tel"
+				maxlength="20"
+				value={data.student.guardianPhone}
+				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+				placeholder="01012345678"
+			/>
+			<p class="mt-1 text-xs text-gray-500">상담·SMS 초대·추후 공지 연락에 사용합니다.</p>
+		</div>
 		<div class="flex gap-3 pt-2">
 			<button
 				type="submit"
@@ -59,6 +95,49 @@
 			</a>
 		</div>
 	</form>
+
+	<div class="mt-10 border-t border-gray-200 pt-6">
+		<h2 class="text-lg font-semibold text-gray-900">학부모 SMS 초대</h2>
+		<p class="mt-1 text-sm text-gray-500">
+			보호자 번호로 학부모 포털 가입 링크를 보냅니다. 수락 후 아래에서 자녀와 연결하세요.
+		</p>
+		<form
+			method="POST"
+			action="?/createParentSmsInvite"
+			class="mt-4 flex flex-wrap items-end gap-3"
+		>
+			<input type="hidden" name="guardianPhone" value={data.student.guardianPhone} />
+			<button
+				type="submit"
+				disabled={!data.student.guardianPhone}
+				class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-300"
+			>
+				SMS 초대 보내기
+			</button>
+		</form>
+		{#if !data.student.guardianPhone}
+			<p class="mt-2 text-xs text-amber-800">보호자 휴대번호를 저장한 뒤 초대할 수 있습니다.</p>
+		{/if}
+		{#if data.pendingParentInvite}
+			<div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
+				<p>
+					대기 중 초대 · <span class="font-mono">{data.pendingParentInvite.phone}</span> · 만료
+					{data.pendingParentInvite.expiresAt.slice(0, 10)}
+				</p>
+				<input
+					readonly
+					class="mt-2 w-full rounded border border-gray-200 bg-white px-2 py-1 font-mono text-[11px]"
+					value={`${data.inviteAcceptOrigin}${resolve('/invite/accept')}?token=${encodeURIComponent(data.pendingParentInvite.token)}`}
+				/>
+				<form method="POST" action="?/resendParentSmsInvite" class="mt-2 inline">
+					<input type="hidden" name="inviteId" value={data.pendingParentInvite.id} />
+					<button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+						SMS 재발송
+					</button>
+				</form>
+			</div>
+		{/if}
+	</div>
 
 	<div class="mt-10 border-t border-gray-200 pt-6">
 		<h2 class="text-lg font-semibold text-gray-900">학부모 연결</h2>
