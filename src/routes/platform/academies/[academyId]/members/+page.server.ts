@@ -8,7 +8,7 @@ import {
 	AcademyInvite,
 	defaultInviteExpiresAt,
 	generateInviteToken,
-	normalizeInviteEmail
+	validateInviteChannelFields
 } from '$lib/server/models/academy-invite';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { Teacher } from '$lib/server/models/teacher';
@@ -21,6 +21,7 @@ import {
 	resolveInviteMailOrigin,
 	sendAcademyInviteEmail
 } from '$lib/server/invite-mail';
+import { dispatchInviteSms, inviteSmsNoticeMessage } from '$lib/server/invite-sms';
 import {
 	assertTeacherLinkValid,
 	TEACHER_INVITE_PENDING_USER_ID
@@ -83,7 +84,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const notice = url.searchParams.get('notice');
 	return {
 		inviteAcceptOrigin: resolveInviteMailOrigin(process.env as InviteMailEnv, url.origin),
-		noticeMessage: inviteMailNoticeMessage(notice),
+		noticeMessage: inviteMailNoticeMessage(notice) ?? inviteSmsNoticeMessage(notice),
 		academyIdHex: academyId.toHexString(),
 		academyName: academy.name,
 		academyStatus: academy.status,
@@ -95,7 +96,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		})),
 		inviteRows: inviteDocs.map((inv) => ({
 			id: inv._id.toString(),
-			email: inv.email,
+			channel: inv.role === 'parent' || inv.phone ? ('sms' as const) : ('email' as const),
+			email: inv.email ?? null,
+			phone: inv.phone ?? null,
 			role: inv.role as InviteRole,
 			expiresAt: inv.expiresAt.toISOString(),
 			token: inv.token,
@@ -104,7 +107,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				? (teacherNameById.get(inv.linkedTeacherId.toString()) ?? null)
 				: null,
 			lastEmailSentAt: inv.lastEmailSentAt?.toISOString() ?? null,
-			lastEmailError: inv.lastEmailError ?? null
+			lastEmailError: inv.lastEmailError ?? null,
+			lastSmsSentAt: inv.lastSmsSentAt?.toISOString() ?? null,
+			lastSmsError: inv.lastSmsError ?? null
 		})),
 		rows: members.map((m) => ({
 			userId: m.userId,
@@ -223,14 +228,16 @@ export const actions: Actions = {
 		const academyId = parseAcademyIdParam(params.academyId);
 		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const fd = await request.formData();
-		const email = normalizeInviteEmail(fd.get('email')?.toString() ?? '');
-		if (!email) {
-			return fail(400, { error: '유효한 이메일 주소를 입력하세요.' });
-		}
 		const roleRaw = fd.get('role')?.toString()?.trim() ?? '';
 		if (!INVITE_ROLES.includes(roleRaw as InviteRole)) {
 			return fail(400, { error: '허용되지 않은 역할입니다.' });
 		}
+		const channel = validateInviteChannelFields(
+			roleRaw as InviteRole,
+			fd.get('email')?.toString() ?? '',
+			fd.get('phone')?.toString() ?? ''
+		);
+		if (!channel.ok) return fail(400, { error: channel.error });
 		await connectDB();
 		let linkedTeacherId: Types.ObjectId | undefined;
 		if (roleRaw === 'teacher') {
@@ -242,9 +249,38 @@ export const actions: Actions = {
 				linkedTeacherId = tid;
 			}
 		}
-		await AcademyInvite.deleteMany({ academyId, email });
 		const token = generateInviteToken();
 		const expiresAt = defaultInviteExpiresAt();
+		const academy = await Academy.findById(academyId).lean();
+		const academyName = academy?.name ?? '학원';
+		if ('phone' in channel.fields && channel.fields.phone) {
+			const phone = channel.fields.phone;
+			await AcademyInvite.deleteMany({ academyId, phone });
+			const created = await AcademyInvite.create({
+				academyId,
+				phone,
+				role: roleRaw as InviteRole,
+				token,
+				expiresAt,
+				...(locals.user?.id ? { createdByUserId: locals.user.id } : {}),
+				...(linkedTeacherId ? { linkedTeacherId } : {})
+			});
+			const notice = await dispatchInviteSms(
+				created._id,
+				academyName,
+				phone,
+				token,
+				expiresAt,
+				url.origin,
+				'create'
+			);
+			membersRedirect(academyId.toHexString(), notice);
+		}
+		if (!('email' in channel.fields) || !channel.fields.email) {
+			return fail(400, { error: '초대 채널을 확인할 수 없습니다.' });
+		}
+		const email = channel.fields.email;
+		await AcademyInvite.deleteMany({ academyId, email });
 		const created = await AcademyInvite.create({
 			academyId,
 			email,
@@ -254,8 +290,6 @@ export const actions: Actions = {
 			...(locals.user?.id ? { createdByUserId: locals.user.id } : {}),
 			...(linkedTeacherId ? { linkedTeacherId } : {})
 		});
-		const academy = await Academy.findById(academyId).lean();
-		const academyName = academy?.name ?? '학원';
 		const notice = await dispatchInviteEmail(
 			created._id,
 			academyName,
@@ -285,12 +319,30 @@ export const actions: Actions = {
 		}
 		if (inv.expiresAt.getTime() < Date.now()) {
 			return fail(400, {
-				error: '만료된 초대에는 메일을 재발송할 수 없습니다. 새 초대를 만드세요.'
+				error: '만료된 초대에는 재발송할 수 없습니다. 새 초대를 만드세요.'
 			});
 		}
 		const academy = await Academy.findById(academyId).lean();
 		if (!academy) {
 			return fail(404, { error: '학원을 찾을 수 없습니다.' });
+		}
+		if (inv.role === 'parent' || inv.phone) {
+			if (!inv.phone) {
+				return fail(400, { error: 'SMS 초대에 전화번호가 없습니다.' });
+			}
+			const notice = await dispatchInviteSms(
+				oid,
+				academy.name,
+				inv.phone,
+				inv.token,
+				inv.expiresAt,
+				url.origin,
+				'resend'
+			);
+			membersRedirect(academyId.toHexString(), notice);
+		}
+		if (!inv.email) {
+			return fail(400, { error: '이메일 초대에 주소가 없습니다.' });
 		}
 		const notice = await dispatchInviteEmail(
 			oid,
