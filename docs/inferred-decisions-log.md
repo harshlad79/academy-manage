@@ -22,14 +22,84 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
-### 2026-05-13 — 플랫폼 멤버 이메일 초대 MVP — 진행 중
+### 2026-05-19 — 학부모 SMS 초대·보호자 연락처 구현
 
-- **맥락**: 서브에이전트 문서 선행; 구현은 병렬 트랙. 저장소 glob 기준 `*invite*`·`AcademyInvite` 등 초대 전용 소스·모델 **미랜딩**.
-- **추론한 결정** (구현 랜딩 후 경로·모델명으로 구체화):
-  - MVP: 플랫폼 **이메일 초대 대기 목록**(pending) + **수락 스텁 라우트**(accept stub; 실제 수락 로직은 후속).
-  - 라우트·모델 배치는 **`src/routes/platform/**`** 구현 트랙과 충돌 없이 위임(본 문서만 선행 갱신).
-- **대안(포기)**: 코드 없이 `session-context-digest.md` «다음 후보»·`session-handoff-and-status.md` §0 문구 대폭 수정 — 병합 전 혼선 방지로 보류.
-- **검증**: 미실행 — 초대 관련 구현 미존재.
+- **맥락**: [docs/superpowers/specs/2026-05-19-invite-sms-phone-design.md](superpowers/specs/2026-05-19-invite-sms-phone-design.md), [plans/2026-05-19-invite-sms-phone.md](superpowers/plans/2026-05-19-invite-sms-phone.md).
+- **추론한 결정**:
+  - **`AcademyInvite`**: parent는 `phone`만, 스태ff는 `email`만; 수락 parent는 **토큰-only**.
+  - **`invite-sms.ts`**: `INVITE_SMS_ENABLED` 스텁; 미설정 시 URL 복사.
+  - **`Student.guardianPhone`**, 학생 편집·플랫폼 멤버 SMS UI; **`/p/settings`** 연락·SMS 동의.
+- **대안(포기)**: OAuth 전화 엄격 일치, SMS OTP, 실 알리고·솔라피 HTTP(후속).
+- **검증**: `npm run check` → `npm test` → `npm run lint` → `npm run build`.
+
+### 2026-05-19 — Live 소셜 OAuth 구현
+
+- **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md), [plans/2026-05-19-live-oauth.md](superpowers/plans/2026-05-19-live-oauth.md).
+- **추론한 결정**:
+  - **`auth-social.ts`**: env 있는 제공자만 `socialProviders` 등록.
+  - **`terms-gate` + `/auth/accept-terms`**: live 최초 약관; Mongo 폴백으로 `termsAcceptedAt` 갱신.
+  - **`/auth/sign-in`**: 모바일 소셜 우선; `inviteEmail` 시만 이메일·비밀번호.
+  - **초대 수락 UI**: live 시 「카카오로 계속」 CTA.
+  - **SMS·전화 초대·대기 큐** 후속.
+- **검증**: `npm run check` · `npm test`(52) · `npm run lint` · `npm run build`.
+
+### 2026-05-19 — Live 소셜 OAuth 설계 (brainstorming 승인)
+
+- **맥락**: [docs/superpowers/specs/2026-05-19-live-oauth-design.md](superpowers/specs/2026-05-19-live-oauth-design.md).
+- **추론한 결정**:
+  - **소셜 3종 동시**(카카오·네이버·구글); mock은 소셜 비노출.
+  - **스태프** 이메일 초대·수락 시 **이메일 엄격 일치**; **학부모** 일반 가입은 소셜만·`ParentStudentLink` 연결.
+  - **약관** 최초 가입 1회; `inviteEmail` 있을 때만 이메일·비밀번호 보조 UI.
+  - **SMS·전화 초대·대기 대시보드**는 본 구현 범위 밖(후속 스펙).
+- **검증**: 구현 완료 항목 위 참조.
+
+### 2026-05-15 — 비가입자 가입·로그인 후 `/invite/accept` 복귀
+
+- **맥락**: 초대 수락 UI에서 `need_login`·`email_mismatch` 시 인증 유도; live는 Better Auth 이메일·비밀번호, mock은 `AUTH_MOCK_USER_ID` 안내.
+- **추론한 결정**:
+  - **`invite-return.ts`**: `sanitizeInviteCallbackURL`로 `/invite/accept?token=` 만 허용; `buildInviteAcceptReturnPath`·`buildInviteAuthSignInSearch`로 sign-in 쿼리 조립.
+  - **`/auth/sign-in`**: `callbackURL`·`inviteEmail` 쿼리; live `signIn.email`/`signUp.email` 후 callback; mock은 프로필·`mockUserIdForInviteEmail` 힌트.
+  - **`/invite/accept`**: GET form + `resolve()` + hidden `token`/`callbackURL`/`inviteEmail` — `svelte/no-navigation-without-resolve` 준수.
+  - **mock**: `mock-invite-auth.ts`에서 초대 이메일→mock userId 매핑 힌트.
+- **검증**: `npm run check` · `npm test`(46) · `npm run lint` · `npm run build`.
+
+### 2026-05-15 — AcademyInvite 초대 메일 (네이버 SMTP)
+
+- **맥락**: [docs/superpowers/specs/2026-05-15-invite-email-design.md](superpowers/specs/2026-05-15-invite-email-design.md) 승인 후 구현.
+- **추론한 결정**:
+  - **`invite-mail.ts`**: `INVITE_MAIL_ENABLED=true` + SMTP env 있을 때만 nodemailer 발송; mock 여부와 무관.
+  - **실패(D)**: `createInvite` DB 유지 + `lastEmailError`·목록 재발송·URL 복사; redirect `?notice=` flash.
+  - **수락 URL**: `PUBLIC_APP_ORIGIN` → `BETTER_AUTH_URL` → 요청 `origin`.
+  - **`AcademyInvite`**: `lastEmailSentAt`, `lastEmailError`.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
+### 2026-05-13 — 초대 수락으로 `AcademyMembership` 생성
+
+- **맥락**: 다이제스트·핸드오프 후속 — 토큰 수락 시 DB 멤버십 반영.
+- **추론한 결정**:
+  - **`consumeAcademyInviteForLoggedInUser`**(`src/lib/server/invite-consume.ts`): 세션 `user.email` 정규화값과 초대 `email` 일치 필수; live 시 `liveBetterAuthUserExists`; 강사 초대는 `linkedTeacherId` 있을 때만 `assertTeacherLinkValid`; 생성 후 `AcademyInvite` 삭제.
+  - **`assertTeacherLinkValid`** + **`TEACHER_INVITE_PENDING_USER_ID`** 를 **`src/lib/server/teacher-membership-link.ts`** 로 이동해 플랫폼 멤버 `createInvite` 와 공유.
+  - **`/invite/accept`**: `load` 에 `acceptUi`(로그인·이메일 불일치 등); `acceptInvite` 액션 성공 시 **`/`** 로 리다이렉트.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
+### 2026-05-13 — 핸드오프 §4·§5·README 동기화(초대 MVP 반영)
+
+- **맥락**: §0·다이제스트는 `AcademyInvite`·`/invite/accept` 스텁을 반영했으나 §4 표·후속 문장·핵심 파일 목록·루트 README는 구버전에 가까움.
+- **추론한 결정**:
+  - **`session-handoff-and-status.md` §4**: 플랫폼 행에 멤버·초대·수락 스텁 명시; 후속에서「이메일 초대」를 **발송·수락 시 멤버십 자동 반영**으로 쪼개어 §0와 모순 제거.
+  - **§5**: `academy-invite` 모델 경로를 목록에 추가.
+  - **`README.md`**: 프로젝트 한 줄·스택·문서 링크·실행·검증만 최소 기술(기본 `sv` 보일러플레이트 대체).
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
+### 2026-05-13 — 플랫폼 멤버 이메일 초대 MVP
+
+- **맥락**: 사용자「무한 반복 완성·멀티에이전트」— digest 후보였던 플랫폼 초대 착수.
+- **추론한 결정**:
+  - **`AcademyInvite`** 모델(`src/lib/server/models/academy-invite.ts`): `academyId`+`email` 유니크, `token` 유니크, 만료 14일, teacher 시 `linkedTeacherId` 선택·`assertTeacherLinkValid` 재사용(배제용 `__invite_pending__`).
+  - **`/platform/academies/[academyId]/members`**: `createInvite`·`revokeInvite`, 목록·수락 URL(`inviteAcceptOrigin`+`resolve('/invite/accept')`).
+  - **`/invite/accept`**: 공개 스텁 페이지 — 토큰 검증·만료 안내; 자동 멤버십 생성 없음(MVP).
+  - **`scripts/seed.ts`**: `AcademyInvite` 해당 학원 ID 범위 삭제.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
 
 ### 2026-05-13 — 사용자·서브 통신: 항상 caveman + `[CRITICAL]` 전문
 

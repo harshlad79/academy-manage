@@ -3,6 +3,7 @@ import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { MongoClient } from 'mongodb';
 import type { Session, User } from 'better-auth/types';
 import { env } from '$env/dynamic/private';
+import { buildSocialProviders } from '$lib/server/auth-social';
 
 export function isMockAuthMode(): boolean {
 	return (env.AUTH_MODE ?? 'mock') === 'mock';
@@ -69,15 +70,44 @@ function getLiveAuth(): ReturnType<typeof betterAuth> {
 		secret,
 		baseURL,
 		trustedOrigins: [baseURL],
+		user: {
+			additionalFields: {
+				termsAcceptedAt: {
+					type: 'date',
+					required: false,
+					input: false
+				},
+				phone: {
+					type: 'string',
+					required: false,
+					input: true
+				},
+				smsMarketingConsentAt: {
+					type: 'date',
+					required: false,
+					input: false
+				}
+			}
+		},
+		socialProviders: buildSocialProviders({
+			KAKAO_CLIENT_ID: env.KAKAO_CLIENT_ID,
+			KAKAO_CLIENT_SECRET: env.KAKAO_CLIENT_SECRET,
+			NAVER_CLIENT_ID: env.NAVER_CLIENT_ID,
+			NAVER_CLIENT_SECRET: env.NAVER_CLIENT_SECRET,
+			GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+			GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET
+		}),
 		// PRD는 소셜 중심이나, OAuth 키 없이 로컬에서 live 모드를 열 수 있도록 비밀번호 경로 허용
 		emailAndPassword: { enabled: true }
-	}) as ReturnType<typeof betterAuth>;
+	}) as unknown as ReturnType<typeof betterAuth>;
 	return liveAuth;
 }
 
 export function getAuth() {
 	return isMockAuthMode() ? mockAuthStub : getLiveAuth();
 }
+
+export { isAnySocialProviderConfigured, listEnabledSocialProviders } from '$lib/server/auth-social';
 
 /** Better Auth `academy-db` 의 `user` 컬렉션에 id 가 존재하는지(live 전용). mock 은 항상 true. */
 export async function liveBetterAuthUserExists(userId: string): Promise<boolean> {

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import 'dotenv/config';
 
 import { Academy } from '../src/lib/server/models/academy';
+import { AcademyInvite } from '../src/lib/server/models/academy-invite';
 import { AcademyMembership } from '../src/lib/server/models/academy-membership';
 import { BankDeposit } from '../src/lib/server/models/bank-deposit';
 import { Attendance } from '../src/lib/server/models/attendance';
@@ -35,6 +36,7 @@ async function seed() {
 	console.log('Connected to DB');
 
 	await AcademyMembership.deleteMany({ academyId: academyPair });
+	await AcademyInvite.deleteMany({ academyId: academyPair });
 	await Academy.updateOne(
 		{ _id: academyId },
 		{ $set: { name: '데모 학원', status: 'active' } },

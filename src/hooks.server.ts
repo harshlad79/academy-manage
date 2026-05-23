@@ -3,7 +3,8 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { betterAuth } from 'better-auth';
 import { getAuth, isMockAuthMode } from '$lib/server/auth';
 import { ACTIVE_ACADEMY_COOKIE, resolveActiveAcademyContext } from '$lib/server/active-academy';
-import type { Handle } from '@sveltejs/kit';
+import { needsTermsAcceptance, shouldSkipTermsGate } from '$lib/server/terms-gate';
+import { redirect, type Handle } from '@sveltejs/kit';
 
 type AuthInstance = ReturnType<typeof betterAuth>;
 
@@ -48,6 +49,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (bundle) {
 		event.locals.user = bundle.user;
 		event.locals.session = bundle.session;
+
+		if (
+			!isMockAuthMode() &&
+			event.locals.user &&
+			needsTermsAcceptance(event.locals.user as { termsAcceptedAt?: Date | null })
+		) {
+			const path = event.url.pathname;
+			if (!shouldSkipTermsGate(path)) {
+				const next = `${path}${event.url.search}`;
+				redirect(303, `/auth/accept-terms?next=${encodeURIComponent(next)}`);
+			}
+		}
+
 		await attachAcademyMembership(event);
 	}
 	return svelteKitHandler({ event, resolve, auth, building });

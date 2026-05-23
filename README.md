@@ -1,42 +1,29 @@
-# sv
+# academy-manage
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+학원(다학원 스코프) 운영·수납·출결·플랫폼 관리를 위한 **SvelteKit** 앱입니다.
 
-## Creating a project
+## 스택
 
-If you're seeing this, you've probably already done this step. Congrats!
+SvelteKit 5, Tailwind 4, TypeScript strict, MongoDB + Mongoose, Better Auth(mock / live).
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## 문서
 
-To recreate this project with the same configuration:
+| 문서                                                                     | 용도                   |
+| ------------------------------------------------------------------------ | ---------------------- |
+| [docs/PRD.md](docs/PRD.md)                                               | 제품 요구·범위         |
+| [docs/session-handoff-and-status.md](docs/session-handoff-and-status.md) | 구현 스냅샷·재개 안내  |
+| [docs/session-context-digest.md](docs/session-context-digest.md)         | 신규 대화용 짧은 요약  |
+| [AGENTS.md](AGENTS.md)                                                   | 에이전트·Git·검증 순서 |
 
-```sh
-# recreate this project
-npx sv@0.15.3 create --template minimal --types ts --add prettier eslint vitest="usages:unit" tailwindcss="plugins:none" --no-download-check --install npm .
-```
+## 로컬 실행
 
-## Developing
+1. `.env`는 [`.env.example`](.env.example)을 참고합니다. `AUTH_MODE=mock`이어도 업무 데이터는 MongoDB를 씁니다.
+2. `npm install`
+3. MongoDB 기동 후 `npm run seed` 권장
+4. `npm run dev`
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## 검증
 
-```sh
-npm run dev
+`npm run check` → `npm test` → `npm run lint` → `npm run build`
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+원 템플릿 안내는 [SvelteKit 문서](https://svelte.dev/docs/kit)를 참고하세요.
