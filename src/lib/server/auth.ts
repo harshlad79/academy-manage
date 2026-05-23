@@ -76,6 +76,16 @@ function getLiveAuth(): ReturnType<typeof betterAuth> {
 					type: 'date',
 					required: false,
 					input: false
+				},
+				phone: {
+					type: 'string',
+					required: false,
+					input: true
+				},
+				smsMarketingConsentAt: {
+					type: 'date',
+					required: false,
+					input: false
 				}
 			}
 		},

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { resolve } from '$app/paths';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -61,6 +62,11 @@
 
 <section class="max-w-3xl print:hidden">
 	<h1 class="text-2xl font-semibold text-gray-900">내 자녀</h1>
+	<p class="mt-2 text-sm">
+		<a href={resolve('/p/settings')} class="font-medium text-indigo-600 hover:text-indigo-800"
+			>연락처 · 알림 설정</a
+		>
+	</p>
 	<p class="mt-2 text-sm text-gray-600">
 		연결된 학생·수강·미납 청구·납부 이력·최근 출결을 확인합니다. 수정은 학원 관리자에게 문의하세요.
 	</p>
