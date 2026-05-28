@@ -22,7 +22,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			rows: rows.map((r) => ({
 				id: r._id.toString(),
 				name: r.name,
-				status: r.status
+				status: r.status,
+				trialEndsAt: r.trialEndsAt ? r.trialEndsAt.toISOString() : null
 			})),
 			dbError: null as string | null
 		};
@@ -30,7 +31,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		console.error('[platform/academies load]', e);
 		return {
 			defaultAcademyIdHex,
-			rows: [] as { id: string; name: string; status: string }[],
+			rows: [] as {
+				id: string;
+				name: string;
+				status: string;
+				trialEndsAt: string | null;
+			}[],
 			dbError: '학원 목록을 불러오지 못했습니다.'
 		};
 	}
@@ -73,6 +79,14 @@ export const actions: Actions = {
 		if (!idRaw || !isOidHex(idRaw)) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const id = new Types.ObjectId(idRaw);
 		await connectDB();
+		const academy = await Academy.findById(id).select('status').lean();
+		if (!academy) return fail(404, { error: '학원을 찾을 수 없습니다.' });
+		if (academy.status !== 'inactive') {
+			return fail(400, {
+				error:
+					'비활성(inactive) 학원만 다시 활성화할 수 있습니다. 체험(trial) 학원은 문의 큐에서 정식 전환하세요.'
+			});
+		}
 		await Academy.updateOne({ _id: id }, { $set: { status: 'active' } });
 		redirect(303, '/platform/academies');
 	}

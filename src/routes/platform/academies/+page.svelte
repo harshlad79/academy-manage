@@ -5,6 +5,15 @@
 	type FormFlash = { error?: string; success?: boolean };
 
 	let { data, form }: { data: PageData; form?: FormFlash } = $props();
+
+	function formatTrialEndsAt(iso: string): string {
+		return new Date(iso).toLocaleDateString('ko-KR', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			timeZone: 'Asia/Seoul'
+		});
+	}
 </script>
 
 <section class="max-w-5xl">
@@ -69,7 +78,21 @@
 					{#each data.rows as row (row.id)}
 						<tr>
 							<td class="px-4 py-2 font-medium text-gray-900">{row.name}</td>
-							<td class="px-4 py-2 text-gray-700">{row.status}</td>
+							<td class="px-4 py-2 text-gray-700">
+								{#if row.status === 'trial'}
+									<span
+										class="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800"
+										>체험 (trial)</span
+									>
+									{#if row.trialEndsAt}
+										<p class="mt-1 text-xs text-gray-500">
+											종료: {formatTrialEndsAt(row.trialEndsAt)}
+										</p>
+									{/if}
+								{:else}
+									{row.status}
+								{/if}
+							</td>
 							<td class="px-4 py-2 font-mono text-xs text-gray-600">{row.id}</td>
 							<td class="px-4 py-2">
 								<a
@@ -100,6 +123,8 @@
 											다시 활성화
 										</button>
 									</form>
+								{:else if row.status === 'trial'}
+									<span class="text-xs text-gray-500">문의 큐에서 정식 전환</span>
 								{:else if row.id === data.defaultAcademyIdHex}
 									<span class="text-xs text-gray-500">기본 개발 학원</span>
 								{:else}
