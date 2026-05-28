@@ -15,7 +15,7 @@ declare global {
 			/** `resolveActiveAcademyContext` 가 고른 활성 학원(멤버십이 있을 때만 설정) */
 			activeAcademyId?: Types.ObjectId;
 			/** 활성 맥락 학원의 운영 상태(스태프 가드·UI) */
-			academyOperationalStatus?: 'active' | 'inactive';
+			academyOperationalStatus?: 'active' | 'inactive' | 'trial_locked';
 		}
 		// interface PageData {}
 		// interface PageState {}

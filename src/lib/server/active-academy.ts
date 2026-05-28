@@ -1,9 +1,18 @@
 import { Types } from 'mongoose';
+import { isTrialExpired } from '$lib/server/academy-trial';
 import connectDB from '$lib/server/db';
 import { getDefaultAcademyId } from '$lib/server/dev-academy';
 import { Academy } from '$lib/server/models/academy';
+import type { AcademyStatus } from '$lib/server/models/academy';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import type { AcademyMembershipLocals, AcademyRole } from '$lib/server/rbac';
+
+export type AcademyOperationalStatus = 'active' | 'inactive' | 'trial_locked';
+
+export type AcademyStatusMapEntry = {
+	status: AcademyStatus;
+	trialEndsAt?: Date | null;
+};
 
 /** 브라우저에 저장하는 활성 학원 ObjectId(hex). httpOnly 쿠키. */
 export const ACTIVE_ACADEMY_COOKIE = 'active_academy_id';
@@ -12,34 +21,61 @@ export function isOidHex(s: string): boolean {
 	return /^[a-f\d]{24}$/i.test(s.trim());
 }
 
-/** 비활성 학원은 `super_admin` 멤버십만 업무 맥락으로 사용(정리·재활성화용). */
+/** 비활성·trial 만료 학원은 `super_admin` 멤버십만 업무 맥락으로 사용. */
 export function academyAllowsStaffContext(
-	academyStatus: 'active' | 'inactive' | undefined,
-	role: AcademyRole
+	academyStatus: AcademyStatus | undefined,
+	role: AcademyRole,
+	trialEndsAt?: Date | null,
+	now?: Date
 ): boolean {
 	if (!academyStatus) return false;
 	if (academyStatus === 'active') return true;
+	if (academyStatus === 'trial') {
+		if (isTrialExpired('trial', trialEndsAt, now)) return role === 'super_admin';
+		return true;
+	}
 	return role === 'super_admin';
 }
 
 /**
  * 쿠키·기본 학원 해석 및 전환에 사용.
- * 비활성 학원은 `super_admin`(업무) 또는 `parent`(포털 열람)만 허용.
+ * 비활성·trial 만료 학원은 `super_admin`(업무) 또는 `parent`(포털 열람)만 허용.
  */
 export function academyAllowsResolvedContext(
-	academyStatus: 'active' | 'inactive' | undefined,
-	role: AcademyRole
+	academyStatus: AcademyStatus | undefined,
+	role: AcademyRole,
+	trialEndsAt?: Date | null,
+	now?: Date
 ): boolean {
 	if (!academyStatus) return false;
 	if (academyStatus === 'active') return true;
+	if (academyStatus === 'trial') {
+		if (isTrialExpired('trial', trialEndsAt, now)) {
+			return role === 'super_admin' || role === 'parent';
+		}
+		return true;
+	}
 	return role === 'super_admin' || role === 'parent';
+}
+
+/** 스태프 레이아웃 가드·배너용 운영 상태 */
+export function deriveAcademyOperationalStatus(
+	academyStatus: AcademyStatus | undefined,
+	trialEndsAt?: Date | null,
+	now?: Date
+): AcademyOperationalStatus {
+	if (academyStatus === 'inactive') return 'inactive';
+	if (academyStatus === 'trial' && isTrialExpired('trial', trialEndsAt, now)) {
+		return 'trial_locked';
+	}
+	return 'active';
 }
 
 export type ResolvedAcademyContext = {
 	academyId: Types.ObjectId;
 	membership: AcademyMembershipLocals;
 	/** 스태프 레이아웃 가드·배너용 */
-	academyOperationalStatus: 'active' | 'inactive';
+	academyOperationalStatus: AcademyOperationalStatus;
 };
 
 type MemRow = {
@@ -50,32 +86,35 @@ type MemRow = {
 
 async function loadAcademyStatusMap(
 	academyIds: Types.ObjectId[]
-): Promise<Map<string, 'active' | 'inactive'>> {
+): Promise<Map<string, AcademyStatusMapEntry>> {
 	if (academyIds.length === 0) return new Map();
 	const docs = await Academy.find({ _id: { $in: academyIds } })
-		.select('status')
+		.select('status trialEndsAt')
 		.lean();
-	const m = new Map<string, 'active' | 'inactive'>();
+	const m = new Map<string, AcademyStatusMapEntry>();
 	for (const d of docs) {
-		m.set(d._id.toString(), d.status);
+		m.set(d._id.toString(), { status: d.status, trialEndsAt: d.trialEndsAt });
 	}
 	return m;
 }
 
 async function rowUsable(
 	row: MemRow,
-	statusMap: Map<string, 'active' | 'inactive'>
+	statusMap: Map<string, AcademyStatusMapEntry>
 ): Promise<boolean> {
-	const st = statusMap.get(row.academyId.toString());
-	return academyAllowsResolvedContext(st, row.role);
+	const entry = statusMap.get(row.academyId.toString());
+	return academyAllowsResolvedContext(entry?.status, row.role, entry?.trialEndsAt);
 }
 
 function toContext(
 	row: MemRow,
-	statusMap: Map<string, 'active' | 'inactive'>
+	statusMap: Map<string, AcademyStatusMapEntry>
 ): ResolvedAcademyContext {
-	const st = statusMap.get(row.academyId.toString());
-	const academyOperationalStatus: 'active' | 'inactive' = st === 'inactive' ? 'inactive' : 'active';
+	const entry = statusMap.get(row.academyId.toString());
+	const academyOperationalStatus = deriveAcademyOperationalStatus(
+		entry?.status,
+		entry?.trialEndsAt
+	);
 	return {
 		academyId: row.academyId,
 		membership: {
@@ -163,8 +202,12 @@ export async function buildAcademySwitcherData(options: {
 	const statusMap = await loadAcademyStatusMap(ids);
 	const usable = new Set<string>();
 	for (const m of mems) {
-		const st = statusMap.get(m.academyId.toString());
-		if (academyAllowsResolvedContext(st, m.role as AcademyRole)) usable.add(m.academyId.toString());
+		const entry = statusMap.get(m.academyId.toString());
+		if (
+			academyAllowsResolvedContext(entry?.status, m.role as AcademyRole, entry?.trialEndsAt)
+		) {
+			usable.add(m.academyId.toString());
+		}
 	}
 	if (usable.size < 2) return null;
 	const docs = await Academy.find({
