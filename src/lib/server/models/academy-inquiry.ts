@@ -90,10 +90,14 @@ export type AcademyInquiryCreateInput = {
 };
 
 /** 공개 폼·서비스 레이어용 — 정규화·필수 검증 */
-export function validateAcademyInquiryCreateInput(
-	input: AcademyInquiryCreateInput
-):
-	| { ok: true; fields: Pick<AcademyInquiryDoc, 'academyName' | 'contactName' | 'phone' | 'email' | 'region' | 'memo'> }
+export function validateAcademyInquiryCreateInput(input: AcademyInquiryCreateInput):
+	| {
+			ok: true;
+			fields: Pick<
+				AcademyInquiryDoc,
+				'academyName' | 'contactName' | 'phone' | 'email' | 'region' | 'memo'
+			>;
+	  }
 	| { ok: false; error: string } {
 	const academyName = input.academyName.trim();
 	const contactName = input.contactName.trim();

@@ -48,9 +48,7 @@
 		</div>
 
 		<div>
-			<label for="contactName" class="block text-xs font-medium text-gray-600"
-				>원장/담당자명</label
-			>
+			<label for="contactName" class="block text-xs font-medium text-gray-600">원장/담당자명</label>
 			<input
 				id="contactName"
 				name="contactName"

@@ -54,7 +54,12 @@
 	</p>
 
 	{#if data.noticeMessage}
-		<p class="mt-4 rounded-md border px-4 py-3 text-sm {noticeBannerClass(data.notice, data.noticeMessage)}">
+		<p
+			class="mt-4 rounded-md border px-4 py-3 text-sm {noticeBannerClass(
+				data.notice,
+				data.noticeMessage
+			)}"
+		>
 			{data.noticeMessage}
 		</p>
 	{/if}

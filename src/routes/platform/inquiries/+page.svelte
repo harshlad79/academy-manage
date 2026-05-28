@@ -40,12 +40,6 @@
 		return 'border-emerald-200 bg-emerald-50 text-emerald-950';
 	}
 
-	function filterHref(status: InquiryStatus | null): string {
-		const base = resolve('/platform/inquiries');
-		if (!status) return base;
-		return `${base}?status=${encodeURIComponent(status)}`;
-	}
-
 	let expandedId = $state<string | null>(null);
 </script>
 
@@ -59,13 +53,16 @@
 	<p class="mt-2 text-sm text-gray-600">
 		공개 폼(<a href={resolve('/academy-inquiry')} class="text-indigo-600 hover:text-indigo-800"
 			>/academy-inquiry</a
-		>) 접수 건을 검토합니다. 체험 승인 시 원장 <span class="font-medium">academy_admin</span> 이메일
-		초대가 생성되며, trial 기간에는 외부 메일이 차단되므로 수락 링크를 복사해 전달하세요.
+		>) 접수 건을 검토합니다. 체험 승인 시 원장 <span class="font-medium">academy_admin</span> 이메일 초대가
+		생성되며, trial 기간에는 외부 메일이 차단되므로 수락 링크를 복사해 전달하세요.
 	</p>
 
 	{#if data.noticeMessage}
 		<p
-			class="mt-4 rounded-md border px-4 py-3 text-sm {noticeBannerClass(data.notice, data.noticeMessage)}"
+			class="mt-4 rounded-md border px-4 py-3 text-sm {noticeBannerClass(
+				data.notice,
+				data.noticeMessage
+			)}"
 		>
 			{data.noticeMessage}
 		</p>
@@ -79,7 +76,7 @@
 
 	<nav class="mt-6 flex flex-wrap gap-2 text-sm" aria-label="상태 필터">
 		<a
-			href={filterHref(null)}
+			href={resolve('/platform/inquiries')}
 			class="rounded-full px-3 py-1 font-medium {data.statusFilter === null
 				? 'bg-indigo-600 text-white'
 				: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
@@ -88,7 +85,7 @@
 		</a>
 		{#each data.statusOptions as status (status)}
 			<a
-				href={filterHref(status)}
+				href={resolve(`/platform/inquiries?status=${encodeURIComponent(status)}`)}
 				class="rounded-full px-3 py-1 font-medium {data.statusFilter === status
 					? 'bg-indigo-600 text-white'
 					: 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
@@ -154,7 +151,11 @@
 									</form>
 								{/if}
 								{#if row.status === 'new' || row.status === 'contacted'}
-									<form method="POST" action="?/approveTrial" class="flex flex-wrap items-end gap-2">
+									<form
+										method="POST"
+										action="?/approveTrial"
+										class="flex flex-wrap items-end gap-2"
+									>
 										<input type="hidden" name="inquiryId" value={row.id} />
 										<label class="sr-only" for="trial-days-{row.id}">체험 일수</label>
 										<input
@@ -239,7 +240,9 @@
 								</dl>
 								{#if row.inviteAcceptUrl}
 									<div class="mt-4 rounded-md border border-sky-200 bg-sky-50/80 p-3">
-										<p class="text-xs font-medium text-sky-950">원장 초대 수락 링크 (trial 중 메일 차단)</p>
+										<p class="text-xs font-medium text-sky-950">
+											원장 초대 수락 링크 (trial 중 메일 차단)
+										</p>
 										{#if row.inviteExpiresAt}
 											<p class="mt-1 text-[11px] text-sky-900">
 												만료(UTC): {row.inviteExpiresAt}

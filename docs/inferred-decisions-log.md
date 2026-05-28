@@ -22,6 +22,17 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-29 — 플랫폼 학원 등록 문의·trial
+
+- **맥락**: [docs/superpowers/specs/2026-05-28-platform-and-academy-leads-design.md](superpowers/specs/2026-05-28-platform-and-academy-leads-design.md), [plans/2026-05-28-platform-academy-inquiry.md](superpowers/plans/2026-05-28-platform-academy-inquiry.md).
+- **추론한 결정**:
+  - **`AcademyInquiry`**: 공개 **`/academy-inquiry`** POST → `status=new`; super_admin **`/platform/inquiries`**에서 `contacted`·**`approveTrial`**(기본 7일)·**`approveActive`**·`reject`.
+  - **`approveInquiryToTrial`**: `Academy(status=trial, trialEndsAt)` + 원장 `academy_admin` **`AcademyInvite`**; trial 중 **`invite-mail`·`invite-sms` 차단**(`academyBlocksExternalComms`).
+  - **만료**: `isTrialExpired` → `academyOperationalStatus=trial_locked`; 스태ff **`+layout.server.ts`** → **`/trial-expired`**(플랫폼·인증·문의·학부모 포털 제외).
+  - **`/platform/academies`**: `trial` 배지·`trialEndsAt`; `reactivateAcademy`는 `inactive`만(trial→active는 inquiries 경로).
+- **대안(포기)**: trial 학원에서 초대 URL만 복사(차단 일원화), 만료 후 parent 차단(현재 parent는 `academyAllowsResolvedContext`로 유지).
+- **검증**: `npm run check` → `npm test` → `npm run lint` → `npm run build`.
+
 ### 2026-05-19 — 학부모 SMS 초대·보호자 연락처 구현
 
 - **맥락**: [docs/superpowers/specs/2026-05-19-invite-sms-phone-design.md](superpowers/specs/2026-05-19-invite-sms-phone-design.md), [plans/2026-05-19-invite-sms-phone.md](superpowers/plans/2026-05-19-invite-sms-phone.md).

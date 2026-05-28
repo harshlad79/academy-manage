@@ -52,7 +52,10 @@ export async function approveInquiryToTrial(options: {
 }): Promise<ApproveInquiryToTrialResult> {
 	const trialDays = options.trialDays ?? DEFAULT_TRIAL_DAYS;
 	if (trialDays < 1) {
-		throw new PlatformInquiryApproveError('체험 기간은 1일 이상이어야 합니다.', 'inquiry_invalid_status');
+		throw new PlatformInquiryApproveError(
+			'체험 기간은 1일 이상이어야 합니다.',
+			'inquiry_invalid_status'
+		);
 	}
 
 	const inquiry = await AcademyInquiry.findById(options.inquiryId);

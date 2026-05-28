@@ -18,38 +18,39 @@
 
 ## File map
 
-| File | Action |
-| ---- | ------ |
-| `src/lib/server/models/academy-inquiry.ts` | Create |
-| `src/lib/server/models/academy-inquiry.test.ts` | Create |
-| `src/lib/server/models/academy.ts` | Modify — `trial`, `trialEndsAt` |
-| `src/lib/server/models/academy.test.ts` | Create or modify |
-| `src/lib/server/academy-trial.ts` | Create — `isTrialExpired`, `academyBlocksExternalComms`, `academyBlocksStaffApp` |
-| `src/lib/server/academy-trial.test.ts` | Create |
-| `src/lib/server/active-academy.ts` | Modify — status map `trial`, operational status |
-| `src/lib/server/active-academy.test.ts` | Modify |
-| `src/lib/server/platform-inquiry-approve.ts` | Create — trial 승인 트랜잭션 |
-| `src/lib/server/platform-inquiry-approve.test.ts` | Create |
-| `src/lib/server/invite-mail.ts` | Modify — trial 외부 차단 훅(옵션 인자 또는 academy lookup) |
-| `src/lib/server/invite-sms.ts` | Modify — 동일 |
-| `src/routes/academy-inquiry/+page.server.ts` | Create — 공개 POST |
-| `src/routes/academy-inquiry/+page.svelte` | Create |
-| `src/routes/academy-inquiry/success/+page.svelte` | Create |
-| `src/routes/platform/inquiries/+page.server.ts` | Create |
-| `src/routes/platform/inquiries/+page.svelte` | Create |
-| `src/routes/platform/+page.svelte` | Modify — 문의 큐 링크 |
-| `src/routes/platform/academies/+page.svelte` | Modify — status `trial` 배지 |
-| `src/routes/+layout.server.ts` | Modify — trial 만료 staff 차단 |
-| `src/routes/trial-expired/+page.svelte` | Create — 안내 전용(선택 redirect target) |
-| `src/app.d.ts` | Modify — `academyOperationalStatus` union |
-| `docs/session-handoff-and-status.md` | Modify §0 |
-| `docs/inferred-decisions-log.md` | Modify |
+| File                                              | Action                                                                           |
+| ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `src/lib/server/models/academy-inquiry.ts`        | Create                                                                           |
+| `src/lib/server/models/academy-inquiry.test.ts`   | Create                                                                           |
+| `src/lib/server/models/academy.ts`                | Modify — `trial`, `trialEndsAt`                                                  |
+| `src/lib/server/models/academy.test.ts`           | Create or modify                                                                 |
+| `src/lib/server/academy-trial.ts`                 | Create — `isTrialExpired`, `academyBlocksExternalComms`, `academyBlocksStaffApp` |
+| `src/lib/server/academy-trial.test.ts`            | Create                                                                           |
+| `src/lib/server/active-academy.ts`                | Modify — status map `trial`, operational status                                  |
+| `src/lib/server/active-academy.test.ts`           | Modify                                                                           |
+| `src/lib/server/platform-inquiry-approve.ts`      | Create — trial 승인 트랜잭션                                                     |
+| `src/lib/server/platform-inquiry-approve.test.ts` | Create                                                                           |
+| `src/lib/server/invite-mail.ts`                   | Modify — trial 외부 차단 훅(옵션 인자 또는 academy lookup)                       |
+| `src/lib/server/invite-sms.ts`                    | Modify — 동일                                                                    |
+| `src/routes/academy-inquiry/+page.server.ts`      | Create — 공개 POST                                                               |
+| `src/routes/academy-inquiry/+page.svelte`         | Create                                                                           |
+| `src/routes/academy-inquiry/success/+page.svelte` | Create                                                                           |
+| `src/routes/platform/inquiries/+page.server.ts`   | Create                                                                           |
+| `src/routes/platform/inquiries/+page.svelte`      | Create                                                                           |
+| `src/routes/platform/+page.svelte`                | Modify — 문의 큐 링크                                                            |
+| `src/routes/platform/academies/+page.svelte`      | Modify — status `trial` 배지                                                     |
+| `src/routes/+layout.server.ts`                    | Modify — trial 만료 staff 차단                                                   |
+| `src/routes/trial-expired/+page.svelte`           | Create — 안내 전용(선택 redirect target)                                         |
+| `src/app.d.ts`                                    | Modify — `academyOperationalStatus` union                                        |
+| `docs/session-handoff-and-status.md`              | Modify §0                                                                        |
+| `docs/inferred-decisions-log.md`                  | Modify                                                                           |
 
 ---
 
 ### Task 1: `Academy` — `trial` status + `trialEndsAt`
 
 **Files:**
+
 - Modify: `src/lib/server/models/academy.ts`
 - Create: `src/lib/server/models/academy.test.ts` (없으면)
 
@@ -96,6 +97,7 @@ export type AcademyDoc = {
 ### Task 2: `academy-trial.ts` helpers
 
 **Files:**
+
 - Create: `src/lib/server/academy-trial.ts`
 - Create: `src/lib/server/academy-trial.test.ts`
 
@@ -103,11 +105,7 @@ export type AcademyDoc = {
 
 ```typescript
 import { describe, expect, it } from 'vitest';
-import {
-	academyBlocksExternalComms,
-	academyBlocksStaffApp,
-	isTrialExpired
-} from './academy-trial';
+import { academyBlocksExternalComms, academyBlocksStaffApp, isTrialExpired } from './academy-trial';
 
 describe('academy-trial', () => {
 	const ends = new Date('2026-01-10T00:00:00Z');
@@ -141,6 +139,7 @@ describe('academy-trial', () => {
 ### Task 3: `active-academy` — resolve `trial` context
 
 **Files:**
+
 - Modify: `src/lib/server/active-academy.ts`
 - Modify: `src/lib/server/active-academy.test.ts` (있으면)
 - Modify: `src/app.d.ts`
@@ -161,6 +160,7 @@ describe('academy-trial', () => {
 ### Task 4: Staff layout — trial 만료 차단
 
 **Files:**
+
 - Modify: `src/routes/+layout.server.ts`
 - Create: `src/routes/trial-expired/+page.svelte`
 
@@ -174,6 +174,7 @@ describe('academy-trial', () => {
 ### Task 5: `AcademyInquiry` model
 
 **Files:**
+
 - Create: `src/lib/server/models/academy-inquiry.ts`
 - Create: `src/lib/server/models/academy-inquiry.test.ts`
 
@@ -187,6 +188,7 @@ describe('academy-trial', () => {
 ### Task 6: `platform-inquiry-approve.ts`
 
 **Files:**
+
 - Create: `src/lib/server/platform-inquiry-approve.ts`
 - Create: `src/lib/server/platform-inquiry-approve.test.ts`
 
@@ -204,6 +206,7 @@ describe('academy-trial', () => {
 ### Task 7: Invite dispatch — trial 외부 차단
 
 **Files:**
+
 - Modify: `src/lib/server/invite-mail.ts`
 - Modify: `src/lib/server/invite-sms.ts`
 - Modify: `src/routes/platform/academies/[academyId]/members/+page.server.ts`
@@ -218,6 +221,7 @@ describe('academy-trial', () => {
 ### Task 8: 공개 `/academy-inquiry`
 
 **Files:**
+
 - Create: `src/routes/academy-inquiry/+page.server.ts`
 - Create: `src/routes/academy-inquiry/+page.svelte`
 - Create: `src/routes/academy-inquiry/success/+page.svelte`
@@ -233,6 +237,7 @@ describe('academy-trial', () => {
 ### Task 9: `/platform/inquiries` 큐 UI
 
 **Files:**
+
 - Create: `src/routes/platform/inquiries/+page.server.ts`
 - Create: `src/routes/platform/inquiries/+page.svelte`
 - Modify: `src/routes/platform/+page.svelte`
@@ -249,6 +254,7 @@ describe('academy-trial', () => {
 ### Task 10: Platform academies — trial 표시
 
 **Files:**
+
 - Modify: `src/routes/platform/academies/+page.server.ts` (reactivate 시 trial→active 옵션)
 - Modify: `src/routes/platform/academies/+page.svelte`
 
@@ -261,6 +267,7 @@ describe('academy-trial', () => {
 ### Task 11: Docs + verification
 
 **Files:**
+
 - Modify: `docs/session-handoff-and-status.md`
 - Modify: `docs/inferred-decisions-log.md`
 
@@ -272,12 +279,12 @@ describe('academy-trial', () => {
 
 ## Spec self-review
 
-| Spec § | Task |
-| ------ | ---- |
-| 2.1 공개 폼 | 8 |
-| 2.2 AcademyInquiry | 5 |
-| 2.3 상태 | 5, 9 |
-| 2.4 Academy trial | 1 |
-| 2.5 trial 정책 | 2, 3, 4, 7 |
-| 2.6 platform/inquiries | 6, 9 |
-| 2.7 기존 academies 유지 | 10 |
+| Spec §                  | Task       |
+| ----------------------- | ---------- |
+| 2.1 공개 폼             | 8          |
+| 2.2 AcademyInquiry      | 5          |
+| 2.3 상태                | 5, 9       |
+| 2.4 Academy trial       | 1          |
+| 2.5 trial 정책          | 2, 3, 4, 7 |
+| 2.6 platform/inquiries  | 6, 9       |
+| 2.7 기존 academies 유지 | 10         |

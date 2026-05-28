@@ -41,7 +41,10 @@ export const actions: Actions = {
 			});
 		} catch (e) {
 			console.error('[academy-inquiry]', e);
-			return fail(500, { error: '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.', values: input });
+			return fail(500, {
+				error: '문의 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+				values: input
+			});
 		}
 
 		redirect(303, '/academy-inquiry/success');

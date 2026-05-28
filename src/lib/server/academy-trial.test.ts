@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	academyBlocksExternalComms,
-	academyBlocksStaffApp,
-	isTrialExpired
-} from './academy-trial';
+import { academyBlocksExternalComms, academyBlocksStaffApp, isTrialExpired } from './academy-trial';
 
 describe('academy-trial', () => {
 	const ends = new Date('2026-01-10T00:00:00Z');
@@ -22,7 +18,7 @@ describe('academy-trial', () => {
 	});
 
 	it('blocks external comms for trial (even not expired)', () => {
-		expect(academyBlocksExternalComms('trial', ends, before)).toBe(true);
-		expect(academyBlocksExternalComms('active', ends, before)).toBe(false);
+		expect(academyBlocksExternalComms('trial')).toBe(true);
+		expect(academyBlocksExternalComms('active')).toBe(false);
 	});
 });

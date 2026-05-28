@@ -27,13 +27,13 @@ super_admin → 문의 검토·trial 승인 → Academy(trial) + 원장 academy_
 
 ### 현재 구현 갭
 
-| 요구 | 현재 |
-| ---- | ---- |
-| 학원 등록 문의 공개 페이지 | 없음 |
-| 문의 큐·trial 승인 | 없음 (`/platform/academies`에서 학원 직접 생성만) |
-| 원장 `academy_admin` 초대 | super_admin 전용 멤버 화면; 원장용 학원 설정 UI 없음 |
-| 학원 내부 Lead·대기 큐 | 없음 (`/communications`는 카운트만) |
-| `Academy.status=trial` | `active` / `inactive` 만 |
+| 요구                       | 현재                                                 |
+| -------------------------- | ---------------------------------------------------- |
+| 학원 등록 문의 공개 페이지 | 없음                                                 |
+| 문의 큐·trial 승인         | 없음 (`/platform/academies`에서 학원 직접 생성만)    |
+| 원장 `academy_admin` 초대  | super_admin 전용 멤버 화면; 원장용 학원 설정 UI 없음 |
+| 학원 내부 Lead·대기 큐     | 없음 (`/communications`는 카운트만)                  |
+| `Academy.status=trial`     | `active` / `inactive` 만                             |
 
 ---
 
@@ -43,44 +43,44 @@ super_admin → 문의 검토·trial 승인 → Academy(trial) + 원장 academy_
 
 **로그인 없음.** 필드(합의 **C**):
 
-| 필드 | 필수 |
-| ---- | ---- |
-| 학원명 | ○ |
-| 원장/담당자명 | ○ |
-| 휴대번호 | ○ (`normalizeInvitePhone`) |
-| 이메일 | ○ (`normalizeInviteEmail`) |
-| 지역/주소 | ○ |
-| 문의 메모 | 선택 |
+| 필드          | 필수                       |
+| ------------- | -------------------------- |
+| 학원명        | ○                          |
+| 원장/담당자명 | ○                          |
+| 휴대번호      | ○ (`normalizeInvitePhone`) |
+| 이메일        | ○ (`normalizeInviteEmail`) |
+| 지역/주소     | ○                          |
+| 문의 메모     | 선택                       |
 
 제출 → `AcademyInquiry` 생성, `status=new`, 감사 안내 화면.
 
 ### 2.2 모델 `AcademyInquiry`
 
-| 필드 | 타입 | 설명 |
-| ---- | ---- | ---- |
-| `academyName` | string | |
-| `contactName` | string | |
-| `phone` | string | 정규화 |
-| `email` | string | 정규화 |
-| `region` | string | 지역/주소 |
-| `memo` | string? | |
-| `status` | enum | `new` \| `contacted` \| `trial` \| `approved` \| `rejected` |
-| `trialDays` | number? | 승인 시 기록(기본 7) |
-| `academyId` | ObjectId? | trial/approved 시 연결 |
-| `processedByUserId` | string? | super_admin |
-| `processedAt` | Date? | |
+| 필드                | 타입      | 설명                                                        |
+| ------------------- | --------- | ----------------------------------------------------------- |
+| `academyName`       | string    |                                                             |
+| `contactName`       | string    |                                                             |
+| `phone`             | string    | 정규화                                                      |
+| `email`             | string    | 정규화                                                      |
+| `region`            | string    | 지역/주소                                                   |
+| `memo`              | string?   |                                                             |
+| `status`            | enum      | `new` \| `contacted` \| `trial` \| `approved` \| `rejected` |
+| `trialDays`         | number?   | 승인 시 기록(기본 7)                                        |
+| `academyId`         | ObjectId? | trial/approved 시 연결                                      |
+| `processedByUserId` | string?   | super_admin                                                 |
+| `processedAt`       | Date?     |                                                             |
 
 인덱스: `status`, `createdAt`, `email`.
 
 ### 2.3 문의 상태 (합의 **C**)
 
-| 상태 | 의미 |
-| ---- | ---- |
-| `new` | 접수 |
-| `contacted` | 플랫폼 관리자 연락 |
-| `trial` | Academy 생성·원장 초대 완료, 체험 중 |
-| `approved` | 정식 전환 |
-| `rejected` | 거절 |
+| 상태        | 의미                                 |
+| ----------- | ------------------------------------ |
+| `new`       | 접수                                 |
+| `contacted` | 플랫폼 관리자 연락                   |
+| `trial`     | Academy 생성·원장 초대 완료, 체험 중 |
+| `approved`  | 정식 전환                            |
+| `rejected`  | 거절                                 |
 
 ### 2.4 `Academy` 확장 (합의 **B**)
 
@@ -89,11 +89,11 @@ Academy.status = trial | active | inactive
 Academy.trialEndsAt?: Date
 ```
 
-| status | 의미 |
-| ------ | ---- |
-| `trial` | 체험 중 |
-| `active` | 정식 |
-| `inactive` | 중지 |
+| status     | 의미    |
+| ---------- | ------- |
+| `trial`    | 체험 중 |
+| `active`   | 정식    |
+| `inactive` | 중지    |
 
 ### 2.5 Trial 정책 (합의 **B** + 만료 차단)
 
@@ -114,13 +114,13 @@ Academy.trialEndsAt?: Date
 
 ### 2.6 super_admin 워크플로 `/platform/inquiries` (신규)
 
-| 액션 | 동작 |
-| ---- | ---- |
-| 목록·필터 | `status`별 큐 |
-| `contacted` | 상태만 변경 |
+| 액션           | 동작                                                                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 목록·필터      | `status`별 큐                                                                                                                                                                   |
+| `contacted`    | 상태만 변경                                                                                                                                                                     |
 | **trial 승인** | `Academy.create({ status:'trial', trialEndsAt })` + `AcademyInquiry` 연결 + **이메일 `AcademyInvite`** (`role=academy_admin`, 문의 email) + `AcademyInvite` 기존 SMTP 스텁/발송 |
-| `approved` | `Academy.status=active`, 문의 `approved` |
-| `rejected` | 문의 `rejected` |
+| `approved`     | `Academy.status=active`, 문의 `approved`                                                                                                                                        |
+| `rejected`     | 문의 `rejected`                                                                                                                                                                 |
 
 **원장 계정**: 직접 생성·비밀번호 발급 없음 — **초대 수락만**(기존 `/invite/accept` + 이메일 일치).
 
@@ -145,41 +145,41 @@ Academy.trialEndsAt?: Date
 
 필드(MVP):
 
-| 필드 | 필수 |
-| ---- | ---- |
-| 학생(자녀) 이름 | ○ |
-| 보호자명 | ○ |
-| 휴대번호 | ○ |
-| 희망 수업/메모 | 선택 |
+| 필드            | 필수 |
+| --------------- | ---- |
+| 학생(자녀) 이름 | ○    |
+| 보호자명        | ○    |
+| 휴대번호        | ○    |
+| 희망 수업/메모  | 선택 |
 
 제출 → `Lead` 생성, `status=new`, `source=web`.
 
 ### 3.2 모델 `Lead`
 
-| 필드 | 타입 | 설명 |
-| ---- | ---- | ---- |
-| `academyId` | ObjectId | |
-| `studentName` | string | 신청 시 |
-| `guardianName` | string | |
-| `phone` | string | |
-| `memo` | string? | 희망 수업 등 |
-| `source` | enum | `web` \| `staff` |
-| `status` | enum | §3.3 |
-| `studentId` | ObjectId? | 전환 후 |
-| `convertedAt` | Date? | Student 생성 시 |
-| `enrolledAt` | Date? | 해당 `studentId` **첫 Enrollment** 생성 시 자동 |
-| `assignedToUserId` | string? | 담당 행정(선택) |
-| `createdByUserId` | string? | staff 입력 시 |
+| 필드               | 타입      | 설명                                            |
+| ------------------ | --------- | ----------------------------------------------- |
+| `academyId`        | ObjectId  |                                                 |
+| `studentName`      | string    | 신청 시                                         |
+| `guardianName`     | string    |                                                 |
+| `phone`            | string    |                                                 |
+| `memo`             | string?   | 희망 수업 등                                    |
+| `source`           | enum      | `web` \| `staff`                                |
+| `status`           | enum      | §3.3                                            |
+| `studentId`        | ObjectId? | 전환 후                                         |
+| `convertedAt`      | Date?     | Student 생성 시                                 |
+| `enrolledAt`       | Date?     | 해당 `studentId` **첫 Enrollment** 생성 시 자동 |
+| `assignedToUserId` | string?   | 담당 행정(선택)                                 |
+| `createdByUserId`  | string?   | staff 입력 시                                   |
 
 ### 3.3 Lead 상태 (합의 **B**)
 
-| 상태 | 의미 |
-| ---- | ---- |
-| `new` | 접수 |
-| `contacted` | 학원 연락 |
-| `waitlisted` | 대기(자리 없음) |
-| `converted` | Student 생성·연결 완료 |
-| `closed` | 종료(거절·중복·포기 등, `closeReason` 선택) |
+| 상태         | 의미                                        |
+| ------------ | ------------------------------------------- |
+| `new`        | 접수                                        |
+| `contacted`  | 학원 연락                                   |
+| `waitlisted` | 대기(자리 없음)                             |
+| `converted`  | Student 생성·연결 완료                      |
+| `closed`     | 종료(거절·중복·포기 등, `closeReason` 선택) |
 
 **`enrolled` 상태는 사용하지 않음.** 수강 완료는 **`enrolledAt`** 로 표시.
 
@@ -201,13 +201,13 @@ Academy.trialEndsAt?: Date
 
 **권한**: `academy_admin`, `office` (강사는 읽기 제한 또는 미노출 — MVP는 **admin·office만**).
 
-| 뷰 | 필터 |
-| -- | ---- |
-| 신규 | `new` |
-| 진행 | `contacted` |
-| **대기 큐** | `waitlisted` |
-| 전환 | `converted` (+ `enrolledAt` 유무) |
-| 종료 | `closed` |
+| 뷰          | 필터                              |
+| ----------- | --------------------------------- |
+| 신규        | `new`                             |
+| 진행        | `contacted`                       |
+| **대기 큐** | `waitlisted`                      |
+| 전환        | `converted` (+ `enrolledAt` 유무) |
+| 종료        | `closed`                          |
 
 액션: 상태 변경, 메모, `convertLead`, (선택) SMS 초대는 기존 `Student` 편집·`AcademyInvite` parent 흐름.
 
@@ -255,13 +255,13 @@ Academy.trialEndsAt?: Date
 
 ## 6. 에러·엣지
 
-| 상황 | 처리 |
-| ---- | ---- |
-| 비활성·없는 `academyId` on `/apply` | 404 |
-| trial 만료 스태ff | 403 + 안내 페이지 |
-| 중복 문의 email | 허용 또는 `contacted` 합치기(MVP: 허용, 메모로 표시) |
-| Lead 중복 phone | MVP: 별도 Lead 허용; UI에서 최근 건 표시 |
-| mock 모드 | 문의·Lead 생성은 DB; trial 게이트 live 동일 |
+| 상황                                | 처리                                                 |
+| ----------------------------------- | ---------------------------------------------------- |
+| 비활성·없는 `academyId` on `/apply` | 404                                                  |
+| trial 만료 스태ff                   | 403 + 안내 페이지                                    |
+| 중복 문의 email                     | 허용 또는 `contacted` 합치기(MVP: 허용, 메모로 표시) |
+| Lead 중복 phone                     | MVP: 별도 Lead 허용; UI에서 최근 건 표시             |
+| mock 모드                           | 문의·Lead 생성은 DB; trial 게이트 live 동일          |
 
 ---
 
@@ -282,16 +282,16 @@ Academy.trialEndsAt?: Date
 
 ## 9. 합의 체크리스트
 
-| 항목 | 결정 |
-| ---- | ---- |
-| 문의 필드 | C |
-| 원장 계정 | B — 이메일 초대 |
-| 문의 상태 | C |
-| Academy.status | trial \| active \| inactive |
-| Trial 기능 | B — 핵심 O, 외부 연동 X |
-| Trial 기간 | D, 기본 7일 |
-| Lead 생성 | C — staff + web |
-| 공개 신청 로그인 | 없음 |
-| Apply URL | `/apply?a={academyId}` |
-| Lead 상태 | B |
-| 수강 시점 | `enrolledAt` 필드 |
+| 항목             | 결정                        |
+| ---------------- | --------------------------- |
+| 문의 필드        | C                           |
+| 원장 계정        | B — 이메일 초대             |
+| 문의 상태        | C                           |
+| Academy.status   | trial \| active \| inactive |
+| Trial 기능       | B — 핵심 O, 외부 연동 X     |
+| Trial 기간       | D, 기본 7일                 |
+| Lead 생성        | C — staff + web             |
+| 공개 신청 로그인 | 없음                        |
+| Apply URL        | `/apply?a={academyId}`      |
+| Lead 상태        | B                           |
+| 수강 시점        | `enrolledAt` 필드           |

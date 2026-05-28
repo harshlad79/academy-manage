@@ -18,10 +18,6 @@ export function academyBlocksStaffApp(
 	return isTrialExpired(status, trialEndsAt, now);
 }
 
-export function academyBlocksExternalComms(
-	status: AcademyStatus,
-	_trialEndsAt: Date | undefined | null,
-	_now?: Date
-): boolean {
+export function academyBlocksExternalComms(status: AcademyStatus): boolean {
 	return status === 'trial';
 }

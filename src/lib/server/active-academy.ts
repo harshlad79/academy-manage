@@ -203,9 +203,7 @@ export async function buildAcademySwitcherData(options: {
 	const usable = new Set<string>();
 	for (const m of mems) {
 		const entry = statusMap.get(m.academyId.toString());
-		if (
-			academyAllowsResolvedContext(entry?.status, m.role as AcademyRole, entry?.trialEndsAt)
-		) {
+		if (academyAllowsResolvedContext(entry?.status, m.role as AcademyRole, entry?.trialEndsAt)) {
 			usable.add(m.academyId.toString());
 		}
 	}

@@ -134,9 +134,9 @@ describe('notice helpers', () => {
 
 describe('inviteBlockedByTrialGate', () => {
 	it('trial status blocks', () => {
-		expect(
-			inviteBlockedByTrialGate({ status: 'trial', trialEndsAt: new Date('2099-01-01') })
-		).toBe(true);
+		expect(inviteBlockedByTrialGate({ status: 'trial', trialEndsAt: new Date('2099-01-01') })).toBe(
+			true
+		);
 		expect(inviteBlockedByTrialGate({ status: 'active', trialEndsAt: null })).toBe(false);
 		expect(inviteBlockedByTrialGate(null)).toBe(false);
 	});

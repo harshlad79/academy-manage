@@ -26,7 +26,9 @@ export type InviteAcademyTrialGate = {
 	trialEndsAt?: Date | null;
 };
 
-export type LoadAcademyTrialGate = (academyId: Types.ObjectId) => Promise<InviteAcademyTrialGate | null>;
+export type LoadAcademyTrialGate = (
+	academyId: Types.ObjectId
+) => Promise<InviteAcademyTrialGate | null>;
 
 export type InviteMailEnv = {
 	INVITE_MAIL_ENABLED?: string;
@@ -112,7 +114,7 @@ export async function defaultLoadAcademyTrialGate(
 
 export function inviteBlockedByTrialGate(gate: InviteAcademyTrialGate | null): boolean {
 	if (!gate) return false;
-	return academyBlocksExternalComms(gate.status, gate.trialEndsAt);
+	return academyBlocksExternalComms(gate.status);
 }
 
 export async function academyInviteBlockedByTrial(

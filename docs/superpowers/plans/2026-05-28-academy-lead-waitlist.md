@@ -16,35 +16,36 @@
 
 ## File map
 
-| File | Action |
-| ---- | ------ |
-| `src/lib/server/models/lead.ts` | Create |
-| `src/lib/server/models/lead.test.ts` | Create |
-| `src/lib/server/lead-convert.ts` | Create |
-| `src/lib/server/lead-convert.test.ts` | Create |
-| `src/lib/server/lead-enrolled-at.ts` | Create — enrollment hook |
-| `src/lib/server/lead-enrolled-at.test.ts` | Create |
-| `src/routes/apply/+page.server.ts` | Create — public |
-| `src/routes/apply/+page.svelte` | Create |
-| `src/routes/apply/success/+page.svelte` | Create |
-| `src/routes/leads/+page.server.ts` | Create |
-| `src/routes/leads/+page.svelte` | Create |
-| `src/routes/leads/[id]/+page.server.ts` | Create — optional detail |
-| `src/routes/leads/[id]/+page.svelte` | Create |
-| `src/routes/enrollments/+page.server.ts` | Modify — call `syncLeadEnrolledAt` |
-| `src/lib/server/rbac.ts` | Modify — nav `/leads` |
-| `src/routes/communications/+page.svelte` | Modify — leads 링크 |
-| `src/lib/server/academy-members-invite.ts` | Create — extract from platform members |
-| `src/routes/settings/members/+page.server.ts` | Create |
-| `src/routes/settings/members/+page.svelte` | Create |
-| `src/routes/+layout.svelte` | Modify — settings nav (academy_admin) |
-| `docs/session-handoff-and-status.md` | Modify |
+| File                                          | Action                                 |
+| --------------------------------------------- | -------------------------------------- |
+| `src/lib/server/models/lead.ts`               | Create                                 |
+| `src/lib/server/models/lead.test.ts`          | Create                                 |
+| `src/lib/server/lead-convert.ts`              | Create                                 |
+| `src/lib/server/lead-convert.test.ts`         | Create                                 |
+| `src/lib/server/lead-enrolled-at.ts`          | Create — enrollment hook               |
+| `src/lib/server/lead-enrolled-at.test.ts`     | Create                                 |
+| `src/routes/apply/+page.server.ts`            | Create — public                        |
+| `src/routes/apply/+page.svelte`               | Create                                 |
+| `src/routes/apply/success/+page.svelte`       | Create                                 |
+| `src/routes/leads/+page.server.ts`            | Create                                 |
+| `src/routes/leads/+page.svelte`               | Create                                 |
+| `src/routes/leads/[id]/+page.server.ts`       | Create — optional detail               |
+| `src/routes/leads/[id]/+page.svelte`          | Create                                 |
+| `src/routes/enrollments/+page.server.ts`      | Modify — call `syncLeadEnrolledAt`     |
+| `src/lib/server/rbac.ts`                      | Modify — nav `/leads`                  |
+| `src/routes/communications/+page.svelte`      | Modify — leads 링크                    |
+| `src/lib/server/academy-members-invite.ts`    | Create — extract from platform members |
+| `src/routes/settings/members/+page.server.ts` | Create                                 |
+| `src/routes/settings/members/+page.svelte`    | Create                                 |
+| `src/routes/+layout.svelte`                   | Modify — settings nav (academy_admin)  |
+| `docs/session-handoff-and-status.md`          | Modify                                 |
 
 ---
 
 ### Task 1: `Lead` model
 
 **Files:**
+
 - Create: `src/lib/server/models/lead.ts`
 - Create: `src/lib/server/models/lead.test.ts`
 
@@ -56,13 +57,7 @@ import { Lead, LEAD_STATUSES } from './lead';
 
 describe('Lead', () => {
 	it('exports expected statuses without enrolled', () => {
-		expect(LEAD_STATUSES).toEqual([
-			'new',
-			'contacted',
-			'waitlisted',
-			'converted',
-			'closed'
-		]);
+		expect(LEAD_STATUSES).toEqual(['new', 'contacted', 'waitlisted', 'converted', 'closed']);
 	});
 });
 ```
@@ -98,6 +93,7 @@ export type LeadDoc = {
 ### Task 2: `lead-convert.ts`
 
 **Files:**
+
 - Create: `src/lib/server/lead-convert.ts`
 - Create: `src/lib/server/lead-convert.test.ts`
 
@@ -113,6 +109,7 @@ export type LeadDoc = {
 ### Task 3: `lead-enrolled-at.ts` + enrollment hook
 
 **Files:**
+
 - Create: `src/lib/server/lead-enrolled-at.ts`
 - Create: `src/lib/server/lead-enrolled-at.test.ts`
 - Modify: `src/routes/enrollments/+page.server.ts`
@@ -144,6 +141,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 4: 공개 `/apply`
 
 **Files:**
+
 - Create: `src/routes/apply/+page.server.ts`
 - Create: `src/routes/apply/+page.svelte`
 - Create: `src/routes/apply/success/+page.svelte`
@@ -158,6 +156,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 5: `/leads` 목록·필터
 
 **Files:**
+
 - Create: `src/routes/leads/+page.server.ts`
 - Create: `src/routes/leads/+page.svelte`
 - Modify: `src/lib/server/rbac.ts`
@@ -174,6 +173,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 6: Lead 상세(선택)·메모
 
 **Files:**
+
 - Create: `src/routes/leads/[id]/+page.server.ts`
 - Create: `src/routes/leads/[id]/+page.svelte`
 
@@ -186,6 +186,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 7: `academy-members-invite.ts` extract
 
 **Files:**
+
 - Create: `src/lib/server/academy-members-invite.ts`
 - Modify: `src/routes/platform/academies/[academyId]/members/+page.server.ts`
 
@@ -198,6 +199,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 8: `/settings/members` — academy_admin
 
 **Files:**
+
 - Create: `src/routes/settings/members/+page.server.ts`
 - Create: `src/routes/settings/members/+page.svelte`
 - Modify: `src/routes/+layout.svelte` (또는 공통 nav component)
@@ -213,6 +215,7 @@ export async function syncLeadEnrolledAt(options: {
 ### Task 9: Communications hub 링크
 
 **Files:**
+
 - Modify: `src/routes/communications/+page.server.ts`
 - Modify: `src/routes/communications/+page.svelte`
 
@@ -232,12 +235,12 @@ export async function syncLeadEnrolledAt(options: {
 
 ## Spec self-review
 
-| Spec § | Task |
-| ------ | ---- |
-| 3.1 `/apply` | 4 |
-| 3.2 Lead model | 1 |
-| 3.3 status B | 1 |
-| 3.4 enrolledAt | 3 |
-| 3.5 convert | 2, 5, 6 |
-| 3.6 `/leads` UI | 5, 6, 9 |
-| 3.7 academy members | 7, 8 |
+| Spec §              | Task    |
+| ------------------- | ------- |
+| 3.1 `/apply`        | 4       |
+| 3.2 Lead model      | 1       |
+| 3.3 status B        | 1       |
+| 3.4 enrolledAt      | 3       |
+| 3.5 convert         | 2, 5, 6 |
+| 3.6 `/leads` UI     | 5, 6, 9 |
+| 3.7 academy members | 7, 8    |

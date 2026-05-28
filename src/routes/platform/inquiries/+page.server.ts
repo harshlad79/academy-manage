@@ -11,10 +11,7 @@ import {
 	resolveInviteMailOrigin,
 	sendAcademyInviteEmail
 } from '$lib/server/invite-mail';
-import {
-	AcademyInquiry,
-	type AcademyInquiryStatus
-} from '$lib/server/models/academy-inquiry';
+import { AcademyInquiry, type AcademyInquiryStatus } from '$lib/server/models/academy-inquiry';
 import { AcademyInvite } from '$lib/server/models/academy-invite';
 import {
 	approveInquiryToActive,
@@ -92,11 +89,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const docs = await AcademyInquiry.find(filter).sort({ createdAt: -1 }).limit(200).lean();
 
 	const academyIds = [
-		...new Set(
-			docs
-				.map((d) => d.academyId?.toString())
-				.filter((id): id is string => Boolean(id))
-		)
+		...new Set(docs.map((d) => d.academyId?.toString()).filter((id): id is string => Boolean(id)))
 	].map((id) => new Types.ObjectId(id));
 
 	const inviteByAcademyEmail = new Map<string, { token: string; expiresAt: Date }>();
@@ -150,9 +143,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				inviteToken: invite?.token ?? null,
 				inviteExpiresAt: invite?.expiresAt.toISOString() ?? null,
 				inviteAcceptUrl:
-					invite?.token != null
-						? buildInviteAcceptUrl(inviteAcceptOrigin, invite.token)
-						: null
+					invite?.token != null ? buildInviteAcceptUrl(inviteAcceptOrigin, invite.token) : null
 			};
 		})
 	};

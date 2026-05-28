@@ -25,17 +25,13 @@ describe('active-academy', () => {
 	});
 
 	it('academyAllowsStaffContext — trial 미만료는 active 와 동일', () => {
-		expect(academyAllowsStaffContext('trial', 'teacher', trialEnds, beforeTrialEnd)).toBe(
-			true
-		);
+		expect(academyAllowsStaffContext('trial', 'teacher', trialEnds, beforeTrialEnd)).toBe(true);
 		expect(academyAllowsStaffContext('trial', 'office', trialEnds, beforeTrialEnd)).toBe(true);
 	});
 
 	it('academyAllowsStaffContext — trial 만료는 inactive 와 동일', () => {
 		expect(academyAllowsStaffContext('trial', 'teacher', trialEnds, afterTrialEnd)).toBe(false);
-		expect(academyAllowsStaffContext('trial', 'super_admin', trialEnds, afterTrialEnd)).toBe(
-			true
-		);
+		expect(academyAllowsStaffContext('trial', 'super_admin', trialEnds, afterTrialEnd)).toBe(true);
 	});
 
 	it('academyAllowsResolvedContext — 비활성은 super_admin 또는 parent', () => {
@@ -45,21 +41,13 @@ describe('active-academy', () => {
 	});
 
 	it('academyAllowsResolvedContext — trial 미만료는 active 와 동일', () => {
-		expect(academyAllowsResolvedContext('trial', 'parent', trialEnds, beforeTrialEnd)).toBe(
-			true
-		);
-		expect(academyAllowsResolvedContext('trial', 'teacher', trialEnds, beforeTrialEnd)).toBe(
-			true
-		);
+		expect(academyAllowsResolvedContext('trial', 'parent', trialEnds, beforeTrialEnd)).toBe(true);
+		expect(academyAllowsResolvedContext('trial', 'teacher', trialEnds, beforeTrialEnd)).toBe(true);
 	});
 
 	it('academyAllowsResolvedContext — trial 만료는 inactive 와 동일', () => {
-		expect(academyAllowsResolvedContext('trial', 'parent', trialEnds, afterTrialEnd)).toBe(
-			true
-		);
-		expect(academyAllowsResolvedContext('trial', 'teacher', trialEnds, afterTrialEnd)).toBe(
-			false
-		);
+		expect(academyAllowsResolvedContext('trial', 'parent', trialEnds, afterTrialEnd)).toBe(true);
+		expect(academyAllowsResolvedContext('trial', 'teacher', trialEnds, afterTrialEnd)).toBe(false);
 		expect(academyAllowsResolvedContext('trial', 'super_admin', trialEnds, afterTrialEnd)).toBe(
 			true
 		);
@@ -69,8 +57,6 @@ describe('active-academy', () => {
 		expect(deriveAcademyOperationalStatus('active')).toBe('active');
 		expect(deriveAcademyOperationalStatus('inactive')).toBe('inactive');
 		expect(deriveAcademyOperationalStatus('trial', trialEnds, beforeTrialEnd)).toBe('active');
-		expect(deriveAcademyOperationalStatus('trial', trialEnds, afterTrialEnd)).toBe(
-			'trial_locked'
-		);
+		expect(deriveAcademyOperationalStatus('trial', trialEnds, afterTrialEnd)).toBe('trial_locked');
 	});
 });
