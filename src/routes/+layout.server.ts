@@ -6,6 +6,18 @@ import type { LayoutServerLoad } from './$types';
 
 export type { AcademySwitcherData };
 
+/** Task 4: trial 만료 시 staff 차단 redirect 제외 경로 */
+function isTrialExpiredRedirectExcluded(path: string): boolean {
+	if (path === '/trial-expired') return true;
+	if (path === '/academy-inquiry' || path.startsWith('/academy-inquiry/')) return true;
+	if (path === '/apply' || path.startsWith('/apply/')) return true;
+	if (path.startsWith('/auth/')) return true;
+	if (path.startsWith('/invite/')) return true;
+	if (path === '/platform' || path.startsWith('/platform/')) return true;
+	if (path === '/p' || path.startsWith('/p/')) return true;
+	return false;
+}
+
 async function loadAcademySwitcher(locals: App.Locals): Promise<AcademySwitcherData | null> {
 	if (!locals.user || !locals.activeAcademyId) return null;
 	return buildAcademySwitcherData({
@@ -42,6 +54,16 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	if (membership?.role === 'parent') {
 		redirect(303, '/p');
+	}
+
+	if (
+		!portal &&
+		membership &&
+		locals.academyOperationalStatus === 'trial_locked' &&
+		membership.role !== 'super_admin' &&
+		!isTrialExpiredRedirectExcluded(path)
+	) {
+		redirect(303, '/trial-expired');
 	}
 
 	if (
