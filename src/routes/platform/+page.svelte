@@ -10,6 +10,12 @@
 	<ul class="mt-6 space-y-2 text-sm">
 		<li>
 			<a
+				href={resolve('/platform/inquiries')}
+				class="font-medium text-indigo-600 hover:text-indigo-800">학원 등록 문의 큐 →</a
+			>
+		</li>
+		<li>
+			<a
 				href={resolve('/platform/academies')}
 				class="font-medium text-indigo-600 hover:text-indigo-800">등록 학원 목록 →</a
 			>

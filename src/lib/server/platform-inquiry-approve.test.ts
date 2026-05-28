@@ -49,7 +49,22 @@ vi.mock('./models/academy-invite', async (importOriginal) => {
 	};
 });
 
-function makeInquiry(overrides: Record<string, unknown> = {}) {
+type MockInquiry = {
+	_id: Types.ObjectId;
+	academyName: string;
+	contactName: string;
+	phone: string;
+	email: string;
+	region: string;
+	status: string;
+	academyId?: Types.ObjectId;
+	trialDays?: number;
+	processedByUserId?: string;
+	processedAt?: Date;
+	save: ReturnType<typeof vi.fn>;
+};
+
+function makeInquiry(overrides: Partial<MockInquiry> = {}): MockInquiry {
 	const _id = new Types.ObjectId();
 	return {
 		_id,
