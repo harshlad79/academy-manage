@@ -1,10 +1,11 @@
 import mongoose, { Schema, model } from 'mongoose';
 
-export type AcademyStatus = 'active' | 'inactive';
+export type AcademyStatus = 'trial' | 'active' | 'inactive';
 
 export type AcademyDoc = {
 	name: string;
 	status: AcademyStatus;
+	trialEndsAt?: Date;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -14,10 +15,11 @@ const AcademySchema = new Schema<AcademyDoc>(
 		name: { type: String, required: true, trim: true },
 		status: {
 			type: String,
-			enum: ['active', 'inactive'],
+			enum: ['trial', 'active', 'inactive'],
 			required: true,
 			default: 'active'
-		}
+		},
+		trialEndsAt: { type: Date }
 	},
 	{ timestamps: true }
 );
