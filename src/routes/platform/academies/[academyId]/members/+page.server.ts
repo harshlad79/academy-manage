@@ -45,6 +45,7 @@ function membersRedirect(academyIdHex: string, notice: string): never {
 }
 
 async function dispatchInviteEmail(
+	academyId: Types.ObjectId,
 	inviteId: Types.ObjectId,
 	academyName: string,
 	email: string,
@@ -57,13 +58,16 @@ async function dispatchInviteEmail(
 	const mailEnv = process.env as InviteMailEnv;
 	const originBase = resolveInviteMailOrigin(mailEnv, requestOrigin);
 	const acceptUrl = buildInviteAcceptUrl(originBase, token);
-	const mailResult = await sendAcademyInviteEmail({
-		to: email,
-		academyName,
-		role,
-		acceptUrl,
-		expiresAt
-	});
+	const mailResult = await sendAcademyInviteEmail(
+		{
+			to: email,
+			academyName,
+			role,
+			acceptUrl,
+			expiresAt
+		},
+		{ academyId }
+	);
 	await applyInviteEmailMeta(inviteId, mailResult);
 	return inviteMailResultNotice(mailResult, kind);
 }
@@ -84,6 +88,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const notice = url.searchParams.get('notice');
 	return {
 		inviteAcceptOrigin: resolveInviteMailOrigin(process.env as InviteMailEnv, url.origin),
+		notice,
 		noticeMessage: inviteMailNoticeMessage(notice) ?? inviteSmsNoticeMessage(notice),
 		academyIdHex: academyId.toHexString(),
 		academyName: academy.name,
@@ -272,7 +277,8 @@ export const actions: Actions = {
 				token,
 				expiresAt,
 				url.origin,
-				'create'
+				'create',
+				academyId
 			);
 			membersRedirect(academyId.toHexString(), notice);
 		}
@@ -291,6 +297,7 @@ export const actions: Actions = {
 			...(linkedTeacherId ? { linkedTeacherId } : {})
 		});
 		const notice = await dispatchInviteEmail(
+			academyId,
 			created._id,
 			academyName,
 			email,
@@ -337,7 +344,8 @@ export const actions: Actions = {
 				inv.token,
 				inv.expiresAt,
 				url.origin,
-				'resend'
+				'resend',
+				academyId
 			);
 			membersRedirect(academyId.toHexString(), notice);
 		}
@@ -345,6 +353,7 @@ export const actions: Actions = {
 			return fail(400, { error: '이메일 초대에 주소가 없습니다.' });
 		}
 		const notice = await dispatchInviteEmail(
+			academyId,
 			oid,
 			academy.name,
 			inv.email,

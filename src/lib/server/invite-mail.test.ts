@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { Types } from 'mongoose';
+
 import {
 	buildInviteAcceptUrl,
+	inviteBlockedByTrialGate,
 	inviteMailNoticeMessage,
 	inviteMailResultNotice,
 	resolveInviteMailOrigin,
@@ -69,6 +72,22 @@ describe('sendAcademyInviteEmail', () => {
 		expect(r).toEqual({ status: 'skipped', reason: 'disabled' });
 	});
 
+	it('trial academy 이면 trial_blocked (SMTP 호출 없음)', async () => {
+		const sendMail = vi.fn().mockResolvedValue(undefined);
+		const academyId = new Types.ObjectId();
+		const r = await sendAcademyInviteEmail(payload, {
+			env: baseEnv,
+			sendMail,
+			academyId,
+			loadAcademyTrialGate: async () => ({
+				status: 'trial',
+				trialEndsAt: new Date('2099-01-01')
+			})
+		});
+		expect(r).toEqual({ status: 'skipped', reason: 'trial_blocked' });
+		expect(sendMail).not.toHaveBeenCalled();
+	});
+
 	it('성공 시 sent', async () => {
 		const sendMail = vi.fn().mockResolvedValue(undefined);
 		const r = await sendAcademyInviteEmail(payload, { env: baseEnv, sendMail });
@@ -98,11 +117,28 @@ describe('notice helpers', () => {
 		expect(inviteMailResultNotice({ status: 'failed', error: 'x' }, 'resend')).toBe(
 			'invite_resent_failed'
 		);
+		expect(inviteMailResultNotice({ status: 'skipped', reason: 'trial_blocked' }, 'create')).toBe(
+			'invite_mail_trial_blocked'
+		);
+		expect(inviteMailResultNotice({ status: 'skipped', reason: 'trial_blocked' }, 'resend')).toBe(
+			'invite_resent_trial_blocked'
+		);
 	});
 
 	it('inviteMailNoticeMessage', () => {
 		expect(inviteMailNoticeMessage('invite_mail_sent')).toContain('발송');
+		expect(inviteMailNoticeMessage('invite_mail_trial_blocked')).toContain('체험');
 		expect(inviteMailNoticeMessage(null)).toBe(null);
+	});
+});
+
+describe('inviteBlockedByTrialGate', () => {
+	it('trial status blocks', () => {
+		expect(
+			inviteBlockedByTrialGate({ status: 'trial', trialEndsAt: new Date('2099-01-01') })
+		).toBe(true);
+		expect(inviteBlockedByTrialGate({ status: 'active', trialEndsAt: null })).toBe(false);
+		expect(inviteBlockedByTrialGate(null)).toBe(false);
 	});
 });
 

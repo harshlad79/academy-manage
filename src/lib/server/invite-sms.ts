@@ -2,10 +2,12 @@ import type { Types } from 'mongoose';
 
 import { formatSeoulDateString } from '$lib/server/date-seoul';
 import {
+	academyInviteBlockedByTrial,
 	buildInviteAcceptUrl,
 	resolveInviteMailOrigin,
 	truncateInviteMailError,
-	type InviteMailEnv
+	type InviteMailEnv,
+	type LoadAcademyTrialGate
 } from '$lib/server/invite-mail';
 import { applyInviteSmsMeta } from '$lib/server/invite-sms-meta';
 
@@ -19,7 +21,7 @@ export type InviteSmsPayload = {
 export type InviteSmsResult =
 	| { status: 'sent' }
 	| { status: 'failed'; error: string }
-	| { status: 'skipped'; reason: 'disabled' | 'unconfigured' };
+	| { status: 'skipped'; reason: 'disabled' | 'unconfigured' | 'trial_blocked' };
 
 export type InviteSmsEnv = {
 	INVITE_SMS_ENABLED?: string;
@@ -49,8 +51,15 @@ function buildSmsBody(payload: InviteSmsPayload): string {
  */
 export async function sendAcademyInviteSms(
 	payload: InviteSmsPayload,
-	options?: { env?: InviteSmsEnv }
+	options?: {
+		env?: InviteSmsEnv;
+		academyId?: Types.ObjectId;
+		loadAcademyTrialGate?: LoadAcademyTrialGate;
+	}
 ): Promise<InviteSmsResult> {
+	if (await academyInviteBlockedByTrial(options?.academyId, options?.loadAcademyTrialGate)) {
+		return { status: 'skipped', reason: 'trial_blocked' };
+	}
 	const env = options?.env ?? (process.env as InviteSmsEnv);
 	if (!shouldSendInviteSms(env)) {
 		const reason = envTrim(env, 'INVITE_SMS_ENABLED') !== 'true' ? 'disabled' : 'unconfigured';
@@ -73,10 +82,14 @@ export function inviteSmsNoticeMessage(notice: string | null): string | null {
 			return '초대는 생성됐으나 SMS 발송에 실패했습니다. 아래 링크를 복사하거나 재발송하세요.';
 		case 'invite_sms_skipped':
 			return '초대를 생성했습니다. (SMS 미발송 — INVITE_SMS_ENABLED 설정을 확인하세요.)';
+		case 'invite_sms_trial_blocked':
+			return '초대를 생성했습니다. (체험(trial) 기간에는 외부 SMS 발송이 차단됩니다. 아래 수락 링크를 복사하세요.)';
 		case 'invite_sms_resent_ok':
 			return '초대 SMS를 다시 발송했습니다.';
 		case 'invite_sms_resent_failed':
 			return 'SMS 재발송에 실패했습니다. 오류 열과 수락 링크를 확인하세요.';
+		case 'invite_sms_resent_trial_blocked':
+			return '체험(trial) 기간에는 외부 SMS 재발송이 차단됩니다. 수락 링크를 복사하세요.';
 		default:
 			return null;
 	}
@@ -87,6 +100,9 @@ export function inviteSmsResultNotice(result: InviteSmsResult, kind: 'create' | 
 		return kind === 'create' ? 'invite_sms_sent' : 'invite_sms_resent_ok';
 	}
 	if (result.status === 'skipped') {
+		if (result.reason === 'trial_blocked') {
+			return kind === 'create' ? 'invite_sms_trial_blocked' : 'invite_sms_resent_trial_blocked';
+		}
 		return 'invite_sms_skipped';
 	}
 	return kind === 'create' ? 'invite_sms_failed' : 'invite_sms_resent_failed';
@@ -99,14 +115,15 @@ export async function dispatchInviteSms(
 	token: string,
 	expiresAt: Date,
 	requestOrigin: string,
-	kind: 'create' | 'resend'
+	kind: 'create' | 'resend',
+	academyId?: Types.ObjectId
 ): Promise<string> {
 	const mailEnv = process.env as InviteMailEnv & InviteSmsEnv;
 	const originBase = resolveInviteMailOrigin(mailEnv, requestOrigin);
 	const acceptUrl = buildInviteAcceptUrl(originBase, token);
 	const smsResult = await sendAcademyInviteSms(
 		{ to: phone, academyName, acceptUrl, expiresAt },
-		{ env: mailEnv }
+		{ env: mailEnv, academyId }
 	);
 	await applyInviteSmsMeta(inviteId, smsResult);
 	return inviteSmsResultNotice(smsResult, kind);

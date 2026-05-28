@@ -1,7 +1,11 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import type { Types } from 'mongoose';
 
+import { academyBlocksExternalComms } from '$lib/server/academy-trial';
 import { formatSeoulDateString } from '$lib/server/date-seoul';
+import connectDB from '$lib/server/db';
+import { Academy, type AcademyStatus } from '$lib/server/models/academy';
 import type { AcademyInviteRole } from '$lib/server/models/academy-invite';
 
 export type InviteMailPayload = {
@@ -15,7 +19,14 @@ export type InviteMailPayload = {
 export type InviteMailResult =
 	| { status: 'sent' }
 	| { status: 'failed'; error: string }
-	| { status: 'skipped'; reason: 'disabled' | 'unconfigured' };
+	| { status: 'skipped'; reason: 'disabled' | 'unconfigured' | 'trial_blocked' };
+
+export type InviteAcademyTrialGate = {
+	status: AcademyStatus;
+	trialEndsAt?: Date | null;
+};
+
+export type LoadAcademyTrialGate = (academyId: Types.ObjectId) => Promise<InviteAcademyTrialGate | null>;
 
 export type InviteMailEnv = {
 	INVITE_MAIL_ENABLED?: string;
@@ -77,13 +88,41 @@ export function inviteMailNoticeMessage(notice: string | null): string | null {
 			return '초대는 생성됐으나 메일 발송에 실패했습니다. 아래 링크를 복사하거나 재발송하세요.';
 		case 'invite_mail_skipped':
 			return '초대를 생성했습니다. (메일 미발송 — INVITE_MAIL_ENABLED 및 SMTP 설정을 확인하세요.)';
+		case 'invite_mail_trial_blocked':
+			return '초대를 생성했습니다. (체험(trial) 기간에는 외부 메일 발송이 차단됩니다. 아래 수락 링크를 복사하세요.)';
 		case 'invite_resent_ok':
 			return '초대 메일을 다시 발송했습니다.';
 		case 'invite_resent_failed':
 			return '메일 재발송에 실패했습니다. 오류 열과 수락 링크를 확인하세요.';
+		case 'invite_resent_trial_blocked':
+			return '체험(trial) 기간에는 외부 메일 재발송이 차단됩니다. 수락 링크를 복사하세요.';
 		default:
 			return null;
 	}
+}
+
+export async function defaultLoadAcademyTrialGate(
+	academyId: Types.ObjectId
+): Promise<InviteAcademyTrialGate | null> {
+	await connectDB();
+	const doc = await Academy.findById(academyId).select('status trialEndsAt').lean();
+	if (!doc) return null;
+	return { status: doc.status, trialEndsAt: doc.trialEndsAt };
+}
+
+export function inviteBlockedByTrialGate(gate: InviteAcademyTrialGate | null): boolean {
+	if (!gate) return false;
+	return academyBlocksExternalComms(gate.status, gate.trialEndsAt);
+}
+
+export async function academyInviteBlockedByTrial(
+	academyId: Types.ObjectId | undefined,
+	loadGate?: LoadAcademyTrialGate
+): Promise<boolean> {
+	if (!academyId) return false;
+	const load = loadGate ?? defaultLoadAcademyTrialGate;
+	const gate = await load(academyId);
+	return inviteBlockedByTrialGate(gate);
 }
 
 function buildMailContent(payload: InviteMailPayload, fromName: string, fromAddress: string) {
@@ -155,8 +194,16 @@ function createTransportFromEnv(env: InviteMailEnv): Transporter {
  */
 export async function sendAcademyInviteEmail(
 	payload: InviteMailPayload,
-	options?: { env?: InviteMailEnv; sendMail?: InviteMailSendFn }
+	options?: {
+		env?: InviteMailEnv;
+		sendMail?: InviteMailSendFn;
+		academyId?: Types.ObjectId;
+		loadAcademyTrialGate?: LoadAcademyTrialGate;
+	}
 ): Promise<InviteMailResult> {
+	if (await academyInviteBlockedByTrial(options?.academyId, options?.loadAcademyTrialGate)) {
+		return { status: 'skipped', reason: 'trial_blocked' };
+	}
 	const env = options?.env ?? (process.env as InviteMailEnv);
 	if (!shouldSendInviteEmail(env)) {
 		const reason = envTrim(env, 'INVITE_MAIL_ENABLED') !== 'true' ? 'disabled' : 'unconfigured';
@@ -187,6 +234,9 @@ export function inviteMailResultNotice(
 		return kind === 'create' ? 'invite_mail_sent' : 'invite_resent_ok';
 	}
 	if (result.status === 'skipped') {
+		if (result.reason === 'trial_blocked') {
+			return kind === 'create' ? 'invite_mail_trial_blocked' : 'invite_resent_trial_blocked';
+		}
 		return 'invite_mail_skipped';
 	}
 	return kind === 'create' ? 'invite_mail_failed' : 'invite_resent_failed';
