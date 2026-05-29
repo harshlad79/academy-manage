@@ -1,5 +1,7 @@
 import { fail } from '@sveltejs/kit';
+import { Types } from 'mongoose';
 import { withAcademyScope } from '$lib/server/academy-scope';
+import { syncLeadEnrolledAt } from '$lib/server/lead-enrolled-at';
 import { Attendance } from '$lib/server/models/attendance';
 import { AttendanceAuditLog } from '$lib/server/models/attendance-audit-log';
 import { Course } from '$lib/server/models/course';
@@ -108,6 +110,10 @@ export const actions: Actions = {
 			if (code === 11000) return fail(400, { error: '이미 같은 클래스에 등록된 학생입니다.' });
 			throw e;
 		}
+		await syncLeadEnrolledAt({
+			academyId,
+			studentId: new Types.ObjectId(studentId)
+		});
 		return { success: true as const };
 	},
 
