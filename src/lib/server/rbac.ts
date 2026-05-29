@@ -43,6 +43,7 @@ export const NAV_LINKS_FULL = [
 	{ href: '/reports', label: '리포트' },
 	{ href: '/attendance', label: '출결' },
 	{ href: '/makeups', label: '보강' },
+	{ href: '/leads', label: '상담·대기' },
 	{ href: '/communications', label: '소통' }
 ] as const;
 
