@@ -24,8 +24,8 @@
 <section class="mx-auto max-w-lg px-4 py-16">
 	<h1 class="text-xl font-semibold text-gray-900">수강 신청</h1>
 	<p class="mt-2 text-sm text-gray-600">
-		<span class="font-medium text-gray-800">{academyName}</span> 수강·상담 신청입니다. 아래 정보를
-		남겨 주시면 학원에서 연락드립니다.
+		<span class="font-medium text-gray-800">{academyName}</span> 수강·상담 신청입니다. 아래 정보를 남겨
+		주시면 학원에서 연락드립니다.
 	</p>
 
 	{#if form?.error}
@@ -41,7 +41,9 @@
 		<input type="hidden" name="academyId" value={academyId} />
 
 		<div>
-			<label for="studentName" class="block text-xs font-medium text-gray-600">학생(자녀) 이름</label>
+			<label for="studentName" class="block text-xs font-medium text-gray-600"
+				>학생(자녀) 이름</label
+			>
 			<input
 				id="studentName"
 				name="studentName"

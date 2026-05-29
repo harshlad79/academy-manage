@@ -3,12 +3,10 @@ import { Types } from 'mongoose';
 import { isOidHex } from '$lib/server/active-academy';
 import { isMockAuthMode, liveBetterAuthUserExists } from '$lib/server/auth';
 import connectDB from '$lib/server/db';
-import { Academy } from '$lib/server/models/academy';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
-import { Teacher } from '$lib/server/models/teacher';
 import { AcademyInvite } from '$lib/server/models/academy-invite';
 import { assertTeacherLinkValid } from '$lib/server/teacher-membership-link';
-import { ACADEMY_ROLES, ensurePlatformSuperAdmin, type AcademyRole } from '$lib/server/rbac';
+import { ensurePlatformSuperAdmin, type AcademyRole } from '$lib/server/rbac';
 import {
 	createAcademyInvite,
 	type InviteRole,
@@ -18,10 +16,6 @@ import {
 	resendAcademyInvite
 } from '$lib/server/academy-members-invite';
 import type { Actions, PageServerLoad } from './$types';
-
-function membersRedirect(academyIdHex: string, notice: string): never {
-	redirect(303, `/platform/academies/${academyIdHex}/members?notice=${encodeURIComponent(notice)}`);
-}
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	ensurePlatformSuperAdmin(locals);

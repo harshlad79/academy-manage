@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-29 — Lead·대기·공개 신청
+
+- **맥락**: 설계 `2026-05-28-platform-and-academy-leads-design.md` Part B.
+- **추론한 결정**:
+  - `Lead` 상태에 `enrolled` 없음; 첫 `Enrollment` 시 `enrolledAt`만 설정.
+  - `/settings/members`는 원장·super_admin만; 초대 역할 `office`·`teacher`·`parent` (원장은 플랫폼 문의 승인).
+  - `/apply`는 `trial`|`active` 학원만.
+- **대안(포기)**: 학원별 slug URL; Lead 중복 phone 자동 병합.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-29 — 플랫폼 학원 등록 문의·trial
 
 - **맥락**: [docs/superpowers/specs/2026-05-28-platform-and-academy-leads-design.md](superpowers/specs/2026-05-28-platform-and-academy-leads-design.md), [plans/2026-05-28-platform-academy-inquiry.md](superpowers/plans/2026-05-28-platform-academy-inquiry.md).

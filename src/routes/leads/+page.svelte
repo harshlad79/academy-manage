@@ -59,8 +59,8 @@
 <section class="max-w-6xl">
 	<h1 class="text-2xl font-semibold text-gray-900">상담·대기</h1>
 	<p class="mt-2 text-sm text-gray-600">
-		학부모 공개 신청(<code class="font-mono text-[11px]">/apply?a=…</code>)과 행정 직접 입력 건을 상태별로
-		관리합니다. 전환 시 학생 문서가 생성되며, 첫 수강 등록 시 수강 등록 일시가 채워집니다.
+		학부모 공개 신청(<code class="font-mono text-[11px]">/apply?a=…</code>)과 행정 직접 입력 건을
+		상태별로 관리합니다. 전환 시 학생 문서가 생성되며, 첫 수강 등록 시 수강 등록 일시가 채워집니다.
 	</p>
 
 	{#if data.dbError}
@@ -69,12 +69,17 @@
 		</p>
 	{:else}
 		{#if form?.error}
-			<p class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+			<p
+				class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+				role="alert"
+			>
 				{form.error}
 			</p>
 		{/if}
 		{#if form?.success && form?.studentId}
-			<p class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+			<p
+				class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+			>
 				학생으로 전환했습니다.
 				<a
 					class="font-medium text-indigo-600 hover:text-indigo-800"
@@ -84,7 +89,9 @@
 				</a>
 			</p>
 		{:else if form?.success}
-			<p class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+			<p
+				class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+			>
 				저장했습니다.
 			</p>
 		{/if}
@@ -123,7 +130,9 @@
 			use:enhance
 		>
 			<div>
-				<label for="lead-student-name" class="block text-xs font-medium text-gray-600">학생 이름</label>
+				<label for="lead-student-name" class="block text-xs font-medium text-gray-600"
+					>학생 이름</label
+				>
 				<input
 					id="lead-student-name"
 					name="studentName"
@@ -133,7 +142,9 @@
 				/>
 			</div>
 			<div>
-				<label for="lead-guardian-name" class="block text-xs font-medium text-gray-600">보호자명</label>
+				<label for="lead-guardian-name" class="block text-xs font-medium text-gray-600"
+					>보호자명</label
+				>
 				<input
 					id="lead-guardian-name"
 					name="guardianName"
@@ -238,7 +249,9 @@
 							{#if data.statusFilter === 'converted'}
 								<td class="px-4 py-2 align-top text-xs">
 									{#if row.enrolledAt}
-										<span class="text-emerald-800">수강 등록 · {formatDateTime(row.enrolledAt)}</span>
+										<span class="text-emerald-800"
+											>수강 등록 · {formatDateTime(row.enrolledAt)}</span
+										>
 									{:else}
 										<span class="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-900">
 											등록됨·수강 미배정

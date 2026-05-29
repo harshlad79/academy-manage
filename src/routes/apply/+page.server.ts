@@ -44,9 +44,12 @@ function readFormValues(fd: FormData): ApplyFormValues {
 	};
 }
 
-function validateApplyInput(
-	values: ApplyFormValues
-): { ok: true; fields: { studentName: string; guardianName: string; phone: string; memo?: string } } | { ok: false; error: string } {
+function validateApplyInput(values: ApplyFormValues):
+	| {
+			ok: true;
+			fields: { studentName: string; guardianName: string; phone: string; memo?: string };
+	  }
+	| { ok: false; error: string } {
 	const studentName = values.studentName.trim();
 	const guardianName = values.guardianName.trim();
 	if (!studentName) return { ok: false, error: '학생(자녀) 이름을 입력하세요.' };

@@ -59,9 +59,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const statusRaw = url.searchParams.get('status')?.trim() ?? '';
 	const statusFilter =
-		statusRaw && LEAD_STATUSES.includes(statusRaw as LeadStatus)
-			? (statusRaw as LeadStatus)
-			: null;
+		statusRaw && LEAD_STATUSES.includes(statusRaw as LeadStatus) ? (statusRaw as LeadStatus) : null;
 
 	try {
 		const { academyId } = await withAcademyScope();

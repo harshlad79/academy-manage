@@ -268,4 +268,3 @@ export async function resendAcademyInvite(options: {
 	);
 	membersRedirect(redirectPath, notice);
 }
-

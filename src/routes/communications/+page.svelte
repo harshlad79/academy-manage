@@ -8,8 +8,10 @@
 <section class="max-w-2xl">
 	<h1 class="text-2xl font-semibold text-gray-900">소통 · 공지</h1>
 	<p class="mt-2 text-sm text-gray-600">
-		MVP 단계에서 계획된 학부모 대상 공지·알림은 현재 준비 중입니다. 연동 일정이 정해지면 이 화면에서
-		안내하겠습니다.
+		학부모 상담·대기 큐는 <a
+			class="font-medium text-indigo-600 hover:text-indigo-800"
+			href={resolve('/leads')}>상담·대기</a
+		>에서 관리합니다. 공지·알림 발송은 준비 중입니다.
 	</p>
 
 	{#if data.dbError}
@@ -18,7 +20,21 @@
 		</p>
 	{/if}
 
-	<div class="mt-6 grid gap-4 sm:grid-cols-3">
+	<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+		<a
+			href={resolve('/leads')}
+			class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm transition hover:border-indigo-300"
+		>
+			<h2 class="text-sm font-medium text-indigo-900">상담·대기 (Lead)</h2>
+			<p class="mt-2 text-3xl font-semibold tracking-tight text-indigo-950 tabular-nums">
+				{(data.leadNewCount + data.leadWaitlistedCount).toLocaleString('ko-KR')}
+			</p>
+			<p class="mt-2 text-xs text-indigo-800/90">
+				신규 {data.leadNewCount.toLocaleString('ko-KR')} · 대기
+				{data.leadWaitlistedCount.toLocaleString('ko-KR')} · 전환
+				{data.leadConvertedCount.toLocaleString('ko-KR')}
+			</p>
+		</a>
 		<div
 			class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
 			aria-labelledby="communications-parent-link-stat-heading"

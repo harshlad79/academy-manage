@@ -50,18 +50,36 @@ export const NAV_LINKS_FULL = [
 /** PRD §6.4 — `super_admin` 전용 플랫폼 루트(내비 한 줄) */
 export const NAV_LINK_PLATFORM = { href: '/platform', label: '플랫폼' } as const;
 
+/** 원장·전체관리자 — 학원 멤버 초대 */
+export const NAV_LINK_SETTINGS = { href: '/settings/members', label: '학원 설정' } as const;
+
 export type AppNavLink =
 	| (typeof NAV_LINKS_FULL)[number]
 	| (typeof NAV_LINKS_TEACHER)[number]
 	| (typeof NAV_LINKS_PARENT)[number]
-	| typeof NAV_LINK_PLATFORM;
+	| typeof NAV_LINK_PLATFORM
+	| typeof NAV_LINK_SETTINGS;
 
 export function navLinksForRole(role: AcademyRole | null): readonly AppNavLink[] {
 	if (!role) return [];
 	if (role === 'parent') return NAV_LINKS_PARENT.slice();
 	if (role === 'teacher') return NAV_LINKS_TEACHER.slice();
-	if (role === 'super_admin') return [NAV_LINK_PLATFORM, ...NAV_LINKS_FULL];
+	if (role === 'super_admin') {
+		return [NAV_LINK_PLATFORM, ...NAV_LINKS_FULL, NAV_LINK_SETTINGS];
+	}
+	if (role === 'academy_admin') {
+		return [...NAV_LINKS_FULL, NAV_LINK_SETTINGS];
+	}
 	return NAV_LINKS_FULL.slice();
+}
+
+/** `/settings/members` — 원장·전체관리자만 */
+export function ensureAcademySettingsAccess(locals: App.Locals): AcademyMembershipLocals {
+	const m = ensureStaffAcademyMember(locals);
+	if (m.role !== 'academy_admin' && m.role !== 'super_admin') {
+		error(403, '학원 설정은 원장·전체관리자만 이용할 수 있습니다.');
+	}
+	return m;
 }
 
 function ensureUser(locals: App.Locals): NonNullable<App.Locals['user']> {

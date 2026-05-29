@@ -80,8 +80,7 @@
 											? 'bg-amber-100 text-amber-900'
 											: data.lead.status === 'converted'
 												? 'bg-emerald-100 text-emerald-900'
-												: 'bg-gray-200 text-gray-800'}"
-								>{STATUS_LABEL[data.lead.status]}</span
+												: 'bg-gray-200 text-gray-800'}">{STATUS_LABEL[data.lead.status]}</span
 							>
 						</p>
 						{#if data.lead.convertedAt}
@@ -117,7 +116,7 @@
 						</span>
 					</p>
 					{#if data.lead.memo}
-						<p class="mt-2 whitespace-pre-line text-sm text-gray-700">
+						<p class="mt-2 text-sm whitespace-pre-line text-gray-700">
 							<span class="font-medium">메모:</span>
 							<br />
 							{data.lead.memo}
@@ -185,7 +184,8 @@
 						<div>
 							<p class="text-sm font-medium text-emerald-900">학생으로 전환</p>
 							<p class="mt-0.5 text-xs text-emerald-900/80">
-								학생 문서를 생성하고 이 리드를 학생과 연결합니다. 완료 후 학생 편집 화면으로 이동합니다.
+								학생 문서를 생성하고 이 리드를 학생과 연결합니다. 완료 후 학생 편집 화면으로
+								이동합니다.
 							</p>
 						</div>
 						<button
@@ -200,13 +200,9 @@
 		{/if}
 
 		<div class="mt-8">
-			<a
-				href={resolve('/leads')}
-				class="text-sm font-medium text-gray-700 hover:text-gray-900"
-			>
+			<a href={resolve('/leads')} class="text-sm font-medium text-gray-700 hover:text-gray-900">
 				← 상담·대기 목록으로
 			</a>
 		</div>
 	{/if}
 </section>
-

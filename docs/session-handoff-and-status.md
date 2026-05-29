@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-29 — **플랫폼 학원 등록 문의·trial**: 공개 **`/academy-inquiry`** → `AcademyInquiry`; super_admin **`/platform/inquiries`**(체험·정식 승인·거절); `Academy.status` **`trial`** + `trialEndsAt`; trial 중 **초대 메일·SMS 차단**(`academyBlocksExternalComms`); trial 만료 시 스태ff **`trial_locked`** → **`/trial-expired`**(인증·플랫폼·문의·`/p` 등 제외). 직전: **학부모 SMS 초대**·live OAuth.
+**최근 동기화**: 2026-05-29 — **Lead·대기 큐**: 공개 **`/apply?a={academyId}`** → `Lead`; 스태ff **`/leads`**(상담·대기·전환·`enrolledAt`); 원장 **`/settings/members`**(office·teacher·parent 초대). **플랫폼 문의·trial**: **`/academy-inquiry`**, **`/platform/inquiries`**, `Academy.trial`·`trialEndsAt`, trial 만료 **`/trial-expired`**. 직전: 학부모 SMS 초대·live OAuth.
 
 ### 프로젝트·스택
 
@@ -17,8 +17,8 @@
   - **수납·청구**: 학원 내 **관리자·행정**(`academy_admin`, `office` 등 고권한 스태프).
   - **강사**: 출결·보강 등 **담당 반** 범위(`linkedTeacherId`·`Course.teacherId`).
   - **학부모**: 역할 **`/p`** 학부모 포털만(내 자녀 읽기 전용)·스태프 루트는 **redirect(`/p`)** 또는 `ensureStaff*` 시 403 안내 메시지.
-- **스태프 주요 라우트**: `/`, `/students`, `/teachers`, `/courses`, `/enrollments`, `/payments`, **`/reports`**(허브) → **`/reports/course-revenue`**, `/attendance`, **`/makeups`**, **`/platform`**(전체관리자) → **`/platform/inquiries`**, **`/platform/academies`**
-- **공개·trial**: **`/academy-inquiry`**(로그인 없음, 문의 접수) → **`/academy-inquiry/success`**; trial 만료 스태ff 안내 **`/trial-expired`**
+- **스태프 주요 라우트**: `/`, `/students`, …, **`/leads`**, `/communications`, **`/settings/members`**(원장·super_admin), **`/platform`** → inquiries·academies
+- **공개**: **`/academy-inquiry`**, **`/apply?a=`** (trial·active 학원만); trial 만료 **`/trial-expired`**
 - **Academy.status**: `active` · `inactive` · **`trial`**(`trialEndsAt`); 운영 가드 `academyOperationalStatus`: `active` · `inactive` · **`trial_locked`**(만료 trial)
 
 ### 데이터 연쇄·삭제 규칙

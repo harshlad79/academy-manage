@@ -15,6 +15,7 @@ function isTrialExpiredRedirectExcluded(path: string): boolean {
 	if (path.startsWith('/invite/')) return true;
 	if (path === '/platform' || path.startsWith('/platform/')) return true;
 	if (path === '/p' || path.startsWith('/p/')) return true;
+	if (path === '/settings' || path.startsWith('/settings/')) return true;
 	return false;
 }
 
