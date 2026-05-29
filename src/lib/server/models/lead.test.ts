@@ -96,7 +96,7 @@ describe('Lead', () => {
 	});
 
 	it('defines academyId+status+createdAt and academyId+phone indexes', () => {
-		const indexes = Lead.schema.indexes().map((idx) => idx[0]);
+		const indexes = Lead.schema.indexes().map((idx: [Record<string, unknown>]) => idx[0]);
 		expect(indexes).toContainEqual({ academyId: 1, status: 1, createdAt: -1 });
 		expect(indexes).toContainEqual({ academyId: 1, phone: 1 });
 	});
