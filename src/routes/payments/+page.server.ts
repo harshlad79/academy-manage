@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { withAcademyScope } from '$lib/server/academy-scope';
 import {
 	formatSeoulDateString,
@@ -16,9 +16,26 @@ import { Enrollment } from '$lib/server/models/enrollment';
 import { InvoiceLine, type InvoiceLineStatus } from '$lib/server/models/invoice-line';
 import { Payment, type PaymentMethod } from '$lib/server/models/payment';
 import { isPopulatedIdName } from '$lib/server/mongo-populate-guards';
+import {
+	loadPaymentDueNotifyInput,
+	notifyParentsPaymentDueEmail,
+	notifyParentsPaymentDuePush,
+	notifyParentsPaymentDueSms,
+	type ParentPaymentNotifyOutcome,
+	type PaymentDueNotifyInput
+} from '$lib/server/parent-payment-notify';
+import { shouldSendParentNotifyEmail } from '$lib/server/parent-notify-email';
+import { parentNotifyNoticeMessage } from '$lib/server/parent-notify-notices';
+import { shouldSendParentNotifyPush } from '$lib/server/parent-notify-push';
+import { shouldSendParentNotifySms } from '$lib/server/parent-notify-sms';
 import { ensureFinanceAccess, failFromGate, gateFinanceAction } from '$lib/server/rbac';
 import mongoose, { type Types } from 'mongoose';
 import type { Actions, PageServerLoad } from './$types';
+
+function paymentsRedirect(notice?: string): never {
+	const q = notice ? `?notice=${encodeURIComponent(notice)}` : '';
+	redirect(303, `/payments${q}`);
+}
 
 function isOid(id: string) {
 	return /^[a-f\d]{24}$/i.test(id);
@@ -238,6 +255,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			};
 		}
 
+		const notice = url.searchParams.get('notice');
 		return {
 			rows,
 			matchingLines,
@@ -247,7 +265,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			statusFilter,
 			defaultDueDate: formatSeoulDateString(),
 			dbError: null as string | null,
-			openBankingPreview
+			openBankingPreview,
+			notice,
+			noticeMessage: parentNotifyNoticeMessage(notice),
+			parentNotifySmsEnabled: shouldSendParentNotifySms(),
+			parentNotifyEmailEnabled: shouldSendParentNotifyEmail(),
+			parentNotifyPushEnabled: shouldSendParentNotifyPush()
 		};
 	} catch (e) {
 		console.error('[payments load]', e);
@@ -282,10 +305,39 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 				configured: isOpenBankingConfigured(),
 				monthLabel: defaultMonthCatch,
 				rows: [] as OpenBankingPreviewRow[]
-			} satisfies OpenBankingPreview
+			} satisfies OpenBankingPreview,
+			notice: url.searchParams.get('notice'),
+			noticeMessage: parentNotifyNoticeMessage(url.searchParams.get('notice')),
+			parentNotifySmsEnabled: shouldSendParentNotifySms(),
+			parentNotifyEmailEnabled: shouldSendParentNotifyEmail(),
+			parentNotifyPushEnabled: shouldSendParentNotifyPush()
 		};
 	}
 };
+
+async function runPaymentDueNotifyAction(
+	request: Request,
+	locals: App.Locals,
+	notify: (input: PaymentDueNotifyInput) => Promise<ParentPaymentNotifyOutcome>
+): Promise<{ notice: string } | { fail: ReturnType<typeof fail> }> {
+	const rg = gateFinanceAction(locals);
+	if (!rg.ok) return { fail: failFromGate(rg) };
+	let academyId: Types.ObjectId;
+	try {
+		({ academyId } = await withAcademyScope());
+	} catch {
+		return { fail: fail(503, { error: 'DB에 연결할 수 없습니다.' }) };
+	}
+	const data = await request.formData();
+	const id = String(data.get('id') ?? '');
+	const loaded = await loadPaymentDueNotifyInput(academyId, id);
+	if ('error' in loaded) {
+		const code = loaded.error.includes('찾지') ? 404 : 400;
+		return { fail: fail(code, { error: loaded.error }) };
+	}
+	const outcome = await notify(loaded.input);
+	return { notice: outcome.notice };
+}
 
 function parseAmount(raw: string): { error: string } | { value: number } {
 	const s = raw.trim().replace(/,/g, '');
@@ -376,6 +428,24 @@ export const actions: Actions = {
 			return fail(500, { error: '수납 기록 저장에 실패했습니다. 다시 시도하세요.' });
 		}
 		return { success: true as const };
+	},
+
+	notifyPaymentDue: async ({ request, locals }) => {
+		const outcome = await runPaymentDueNotifyAction(request, locals, notifyParentsPaymentDueSms);
+		if ('fail' in outcome) return outcome.fail;
+		paymentsRedirect(outcome.notice);
+	},
+
+	notifyPaymentDueEmail: async ({ request, locals }) => {
+		const outcome = await runPaymentDueNotifyAction(request, locals, notifyParentsPaymentDueEmail);
+		if ('fail' in outcome) return outcome.fail;
+		paymentsRedirect(outcome.notice);
+	},
+
+	notifyPaymentDuePush: async ({ request, locals }) => {
+		const outcome = await runPaymentDueNotifyAction(request, locals, notifyParentsPaymentDuePush);
+		if ('fail' in outcome) return outcome.fail;
+		paymentsRedirect(outcome.notice);
 	},
 
 	registerInboundDeposit: async ({ request, locals }) => {

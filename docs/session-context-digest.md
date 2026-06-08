@@ -38,4 +38,8 @@
 
 ## 다음 후보
 
-은행 API, 학부모 영수증·알림. Taskplane **`integrations`(7)**.
+은행 API 실연동, SMS·푸시·이메일 실발송. Taskplane **`integrations`(7)**.
+
+## 최근 추가
+
+- **`/payments`** 미납 **SMS·이메일·푸시** — `PARENT_NOTIFY_*_ENABLED`, `/p/settings` 채널별 동의

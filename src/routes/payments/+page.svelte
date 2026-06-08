@@ -45,6 +45,14 @@
 				반영했습니다.
 			</p>
 		{/if}
+		{#if data.noticeMessage}
+			<p
+				class="mt-4 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
+				role="status"
+			>
+				{data.noticeMessage}
+			</p>
+		{/if}
 
 		<form method="GET" class="mt-6 flex flex-wrap items-end gap-3">
 			<div>
@@ -354,7 +362,7 @@
 						<th class="px-4 py-3 font-medium text-gray-700">금액</th>
 						<th class="px-4 py-3 font-medium text-gray-700">기한</th>
 						<th class="px-4 py-3 font-medium text-gray-700">상태</th>
-						<th class="w-44 px-4 py-3 font-medium text-gray-700">작업</th>
+						<th class="min-w-[11rem] px-4 py-3 font-medium text-gray-700">작업</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-100">
@@ -391,6 +399,42 @@
 												class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
 											>
 												납부 처리
+											</button>
+										</form>
+										<form method="POST" action="?/notifyPaymentDue">
+											<input type="hidden" name="id" value={row.id} />
+											<button
+												type="submit"
+												class="text-sm font-medium text-violet-700 hover:text-violet-900"
+												title={data.parentNotifySmsEnabled
+													? '연결·동의한 학부모에게 납부 안내 SMS(스텁) 발송'
+													: 'PARENT_NOTIFY_SMS_ENABLED=true 로 스텁 발송 테스트'}
+											>
+												SMS
+											</button>
+										</form>
+										<form method="POST" action="?/notifyPaymentDueEmail">
+											<input type="hidden" name="id" value={row.id} />
+											<button
+												type="submit"
+												class="text-sm font-medium text-sky-700 hover:text-sky-900"
+												title={data.parentNotifyEmailEnabled
+													? '이메일 동의 학부모에게 발송(SMTP 있으면 실발송)'
+													: 'PARENT_NOTIFY_EMAIL_ENABLED=true'}
+											>
+												이메일
+											</button>
+										</form>
+										<form method="POST" action="?/notifyPaymentDuePush">
+											<input type="hidden" name="id" value={row.id} />
+											<button
+												type="submit"
+												class="text-sm font-medium text-teal-700 hover:text-teal-900"
+												title={data.parentNotifyPushEnabled
+													? '푸시 동의·구독 ID 학부모에게 스텁 발송'
+													: 'PARENT_NOTIFY_PUSH_ENABLED=true'}
+											>
+												푸시
 											</button>
 										</form>
 										<form

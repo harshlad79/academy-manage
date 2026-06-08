@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-29 — **Lead·대기 큐**: 공개 **`/apply?a={academyId}`** → `Lead`; 스태ff **`/leads`**(상담·대기·전환·`enrolledAt`); 원장 **`/settings/members`**(office·teacher·parent 초대). **플랫폼 문의·trial**: **`/academy-inquiry`**, **`/platform/inquiries`**, `Academy.trial`·`trialEndsAt`, trial 만료 **`/trial-expired`**. 직전: 학부모 SMS 초대·live OAuth.
+**최근 동기화**: 2026-05-29 — **학부모 납부 안내 알림**: `/payments` 미납 **SMS·이메일·푸시**(`PARENT_NOTIFY_*_ENABLED`); `/p/settings` SMS·이메일·푸시 동의·구독 ID. **Lead·대기·플랫폼 문의·trial** — 이전과 동일.
 
 ### 프로젝트·스택
 
@@ -46,7 +46,7 @@
 
 ### 다음 과제(후보)
 
-**은행 오픈뱅킹 API** 실연동, 학부모 포털 **영수증·알림**, 멀티테넌트·Taskplane 후속. 초대 메일 설계: [`superpowers/specs/2026-05-15-invite-email-design.md`](superpowers/specs/2026-05-15-invite-email-design.md).
+**은행 오픈뱅킹 API** 실연동, 학부모 **푸시·이메일 알림**, SMS 실발송(알리고·솔라피), 멀티테넌트·Taskplane 후속.
 
 ### 짧은 재개(토큰 절약)
 

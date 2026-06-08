@@ -22,6 +22,28 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-05-29 — 학부모 납부 안내 이메일·푸시 스텁
+
+- **맥락**: 후속 C — SMS 외 이메일·푸시 채널.
+- **추론한 결정**:
+  - **`emailNotifyConsentAt`·`pushNotifyConsentAt`·`pushSubscriptionEndpoint`** — Better Auth `user` 문서·`/p/settings` 저장.
+  - **이메일**: `PARENT_NOTIFY_EMAIL_ENABLED` + 기존 SMTP env 시 실발송, 없으면 스텁 `sent`.
+  - **푸시**: `PARENT_NOTIFY_PUSH_ENABLED` + 구독 ID 8자+ 스텁.
+  - **`/payments`**: 미납 행 **SMS / 이메일 / 푸시** 각각 수동 발송.
+- **대안(포기)**: Web Push 구독 UI·FCM 연동, 자동 발송.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
+### 2026-05-29 — 학부모 납부 안내 SMS 스텁
+
+- **맥락**: 핸드오프 후속 `integrations` — 알림·동의 UI(`/p/settings`)는 있으나 발송 경로 없음.
+- **추론한 결정**:
+  - **`parent-notify-sms.ts`**: `PARENT_NOTIFY_SMS_ENABLED=true` 시 스텁 `sent`; trial 학원은 `academyBlocksExternalComms`로 차단.
+  - **수신자**: `ParentStudentLink` + Better Auth `user`의 `phone`·`smsMarketingConsentAt`만(보호자 번호만 있는 경우는 안내 링크 유도).
+  - **트리거**: 스태ff `/payments` 미납 청구 행 **「납부 안내 SMS」** 수동(자동 발송·이메일·푸시는 비범위).
+  - **`user-profile-read.ts`**: `/p/settings`와 공유.
+- **대안(포기)**: `Student.guardianPhone` 무동의 발송, 청구 생성 시 자동 SMS.
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build`.
+
 ### 2026-05-29 — Lead·대기·공개 신청
 
 - **맥락**: 설계 `2026-05-28-platform-and-academy-leads-design.md` Part B.

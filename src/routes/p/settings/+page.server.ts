@@ -4,34 +4,16 @@ import { env } from '$env/dynamic/private';
 import { MongoClient } from 'mongodb';
 import { getAuth, isMockAuthMode } from '$lib/server/auth';
 import { normalizeInvitePhone } from '$lib/server/models/academy-invite';
+import { readUserProfileNotifyFields } from '$lib/server/user-profile-read';
 import type { Actions, PageServerLoad } from './$types';
 
 type ProfileFields = {
 	phone?: string | null;
 	smsMarketingConsentAt?: Date | null;
+	emailNotifyConsentAt?: Date | null;
+	pushNotifyConsentAt?: Date | null;
+	pushSubscriptionEndpoint?: string | null;
 };
-
-async function readProfileLive(userId: string): Promise<ProfileFields> {
-	const url = env.DB_URL?.trim();
-	if (!url) return {};
-	const client = new MongoClient(url);
-	try {
-		const doc = await client
-			.db('academy-db')
-			.collection('user')
-			.findOne(
-				{ $or: [{ id: userId }, { userId }] },
-				{ projection: { phone: 1, smsMarketingConsentAt: 1 } }
-			);
-		return {
-			phone: typeof doc?.phone === 'string' ? doc.phone : null,
-			smsMarketingConsentAt:
-				doc?.smsMarketingConsentAt instanceof Date ? doc.smsMarketingConsentAt : null
-		};
-	} finally {
-		await client.close();
-	}
-}
 
 async function writeProfileLive(userId: string, fields: ProfileFields): Promise<void> {
 	const url = env.DB_URL?.trim();
@@ -75,12 +57,28 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 	let phone = '';
 	let smsConsent = false;
+	let emailConsent = false;
+	let pushConsent = false;
+	let pushSubscriptionEndpoint = '';
+	let accountEmail = locals.user.email ?? '';
 	if (!isMockAuthMode()) {
-		const profile = await readProfileLive(locals.user.id);
+		const profile = await readUserProfileNotifyFields(locals.user.id);
 		phone = profile.phone ?? '';
 		smsConsent = profile.smsMarketingConsentAt != null;
+		emailConsent = profile.emailNotifyConsentAt != null;
+		pushConsent = profile.pushNotifyConsentAt != null;
+		pushSubscriptionEndpoint = profile.pushSubscriptionEndpoint ?? '';
+		if (profile.email?.trim()) accountEmail = profile.email.trim();
 	}
-	return { phone, smsConsent, isMockAuth: isMockAuthMode() };
+	return {
+		phone,
+		smsConsent,
+		emailConsent,
+		pushConsent,
+		pushSubscriptionEndpoint,
+		accountEmail,
+		isMockAuth: isMockAuthMode()
+	};
 };
 
 export const actions: Actions = {
@@ -92,10 +90,17 @@ export const actions: Actions = {
 		if (!uid) return fail(401, { error: '로그인이 필요합니다.' });
 		const fd = await request.formData();
 		const phoneRaw = fd.get('phone')?.toString() ?? '';
-		const agree = fd.get('smsMarketingConsent') === 'on';
+		const smsAgree = fd.get('smsMarketingConsent') === 'on';
+		const emailAgree = fd.get('emailNotifyConsent') === 'on';
+		const pushAgree = fd.get('pushNotifyConsent') === 'on';
+		const pushSubRaw = fd.get('pushSubscriptionEndpoint')?.toString() ?? '';
+		const pushSubTrim = pushSubRaw.trim();
 		const phone = phoneRaw.trim() ? normalizeInvitePhone(phoneRaw) : null;
 		if (phoneRaw.trim() && !phone) {
 			return fail(400, { error: '휴대번호 형식이 올바르지 않습니다(010).' });
+		}
+		if (pushAgree && pushSubTrim.length > 0 && pushSubTrim.length < 8) {
+			return fail(400, { error: '푸시 구독 ID는 8자 이상이어야 합니다(스텁·개발용).' });
 		}
 		if (isMockAuthMode()) {
 			return fail(400, { error: '목업 모드에서는 프로필을 저장할 수 없습니다.' });
@@ -103,7 +108,10 @@ export const actions: Actions = {
 		try {
 			await saveProfile(request.headers, uid, {
 				phone: phone ?? null,
-				smsMarketingConsentAt: agree ? new Date() : null
+				smsMarketingConsentAt: smsAgree ? new Date() : null,
+				emailNotifyConsentAt: emailAgree ? new Date() : null,
+				pushNotifyConsentAt: pushAgree ? new Date() : null,
+				pushSubscriptionEndpoint: pushSubTrim.length > 0 ? pushSubTrim : null
 			});
 		} catch (e) {
 			console.error('[p/settings]', e);
