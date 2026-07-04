@@ -76,6 +76,7 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 
 | 구분                    | 링크                                                                                                         |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Codex CLI handoff**   | [codex-handoff.md](codex-handoff.md), [codex-resume.prompt](codex-resume.prompt)                             |
 | 에이전트 운영(Git·서브) | [AGENTS.md](../AGENTS.md) (저장소 루트)                                                                      |
 | GSD 순서                | [agent-skills-and-gsd-workflow-order.md](agent-skills-and-gsd-workflow-order.md)                             |
 | 추론·정책               | [inferred-decisions-log.md](inferred-decisions-log.md), [agent-autonomy-policy.md](agent-autonomy-policy.md) |
