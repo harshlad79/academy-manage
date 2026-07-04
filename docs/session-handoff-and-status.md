@@ -50,7 +50,8 @@
 
 ### 짧은 재개(토큰 절약)
 
-신규 대화에는 [`session-context-digest.md`](session-context-digest.md) 만 `@`로 붙여도 된다.
+신규 대화에는 [`session-context-digest.md`](session-context-digest.md) 만 `@`로 붙여도 된다.  
+**Codex·외부 에이전트 handoff**는 [`codex-handoff.md`](codex-handoff.md) 복붙 프롬프트 사용.
 
 **재개 프롬프트 예시**:
 

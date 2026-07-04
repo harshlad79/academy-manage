@@ -1,0 +1,21 @@
+# Codex resume prompt — academy-manage
+# 사용: cd academy-manage && git pull && codex exec "$(cat docs/codex-resume.prompt)"
+# NEXT_TASK만 바꿔서 재사용.
+
+프로젝트 academy-manage. 저장소 루트에서 작업.
+
+먼저 읽기:
+- docs/codex-handoff.md §1 (bootstrap) 전체 맥락
+- docs/session-handoff-and-status.md §0
+- docs/inferred-decisions-log.md 최신 5개
+- AGENTS.md
+
+git status && git log -3 --oneline 실행.
+
+완료됨(재구현 금지): 플랫폼 문의·trial, Lead·/apply·/leads, 학부모 납부 안내 SMS·이메일·푸시 스텁 (HEAD 8b74fb2 이상).
+
+[NEXT_TASK]
+오픈뱅킹 프로덕션 어댑터 1차 — docs/codex-handoff.md §2 따름. spec → plan → fetchOpenBankingTransactions 인터페이스 + stub + prod skeleton. 커밋·push는 사용자 요청 전까지 하지 마.
+[/NEXT_TASK]
+
+규칙: agent-autonomy-policy.md, 추론은 inferred-decisions-log. 검증: npm run check → npm test → npm run lint → npm run build. 한국어로 답변.
