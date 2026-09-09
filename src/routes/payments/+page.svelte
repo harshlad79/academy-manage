@@ -299,6 +299,7 @@
 				<div class="mt-4 space-y-4">
 					{#each data.pendingDeposits as dep (dep.id)}
 						{@const cand = linesForDeposit(dep)}
+						{@const suggestion = data.autoMatchSuggestions.find((s) => s.depositId === dep.id)}
 						<div class="rounded-md border border-amber-100 bg-amber-50/80 p-3 text-sm">
 							<p class="font-medium text-gray-900">
 								{won(dep.amountKrw)}
@@ -314,6 +315,21 @@
 							{#if cand.length === 0}
 								<p class="mt-2 text-amber-900">동일 금액의 미납 청구가 없습니다.</p>
 							{:else}
+								{#if suggestion}
+									<p class="mt-2 text-xs">
+										<span
+											class="inline-flex rounded-full px-2 py-0.5 font-medium {suggestion.confidence ===
+											'high'
+												? 'bg-emerald-100 text-emerald-800'
+												: 'bg-gray-200 text-gray-700'}"
+										>
+											자동 제안 ({suggestion.confidence === 'high' ? '높음' : '보통'})
+										</span>
+										<span class="ml-1 text-gray-500">
+											입금 표시·금액 기준 제안 — 매칭 전 내용을 확인하세요.
+										</span>
+									</p>
+								{/if}
 								<form
 									method="POST"
 									action="?/matchDeposit"
@@ -325,10 +341,11 @@
 										id={`match-${dep.id}`}
 										name="invoiceLineId"
 										required
+										autocomplete="off"
 										class="max-w-full min-w-[14rem] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
 									>
 										{#each cand as line (line.id)}
-											<option value={line.id}>
+											<option value={line.id} selected={suggestion?.invoiceLineId === line.id}>
 												{line.studentName}
 												&nbsp;·&nbsp;
 												{line.courseName}
@@ -342,7 +359,7 @@
 										type="submit"
 										class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500"
 									>
-										청구 매칭
+										{suggestion ? '제안 매칭' : '청구 매칭'}
 									</button>
 								</form>
 							{/if}

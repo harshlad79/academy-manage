@@ -12,6 +12,11 @@ import {
 	type OpenBankingTransaction
 } from '$lib/server/banking/open-banking-stub';
 import { BankDeposit } from '$lib/server/models/bank-deposit';
+import { Academy } from '$lib/server/models/academy';
+import {
+	suggestDepositMatches,
+	type DepositMatchSuggestion
+} from '$lib/server/banking/deposit-matching';
 import { Enrollment } from '$lib/server/models/enrollment';
 import { InvoiceLine, type InvoiceLineStatus } from '$lib/server/models/invoice-line';
 import { Payment, type PaymentMethod } from '$lib/server/models/payment';
@@ -169,6 +174,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const statusFilter = url.searchParams.get('status')?.trim() ?? '';
 	try {
 		const { academyId } = await withAcademyScope();
+		const academyDoc = await Academy.findById(academyId).select('billingAutoImport').lean();
+		const billingAutoImport = academyDoc?.billingAutoImport === true;
 		const enrollmentRows = await Enrollment.find({ academyId })
 			.populate('studentId')
 			.populate('courseId')
@@ -256,6 +263,9 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		}
 
 		const notice = url.searchParams.get('notice');
+		const autoMatchSuggestions: DepositMatchSuggestion[] = billingAutoImport
+			? suggestDepositMatches(pendingDeposits, matchingLines)
+			: [];
 		return {
 			rows,
 			matchingLines,
@@ -265,6 +275,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			statusFilter,
 			defaultDueDate: formatSeoulDateString(),
 			dbError: null as string | null,
+			billingAutoImport,
+			autoMatchSuggestions,
 			openBankingPreview,
 			notice,
 			noticeMessage: parentNotifyNoticeMessage(notice),
@@ -300,6 +312,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			statusFilter,
 			defaultDueDate: formatSeoulDateString(),
 			dbError: 'MongoDB에 연결할 수 없습니다. DB를 띄우고 시드한 뒤 다시 시도하세요.',
+			billingAutoImport: false,
+			autoMatchSuggestions: [] as DepositMatchSuggestion[],
 			openBankingPreview: {
 				enabled: process.env.OPEN_BANKING_ENABLED === 'true',
 				configured: isOpenBankingConfigured(),
