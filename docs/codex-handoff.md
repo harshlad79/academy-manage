@@ -249,16 +249,16 @@ codex exec resume --last "docs/codex-handoff.md §2 오픈뱅킹 spec부터. 커
 
 ## 9. 문서 링크 요약
 
-| 문서 | 용도 |
-|------|------|
-| [session-handoff-and-status.md](session-handoff-and-status.md) | 구현 스냅샷 §0 |
-| [session-context-digest.md](session-context-digest.md) | 짧은 재개 |
-| [inferred-decisions-log.md](inferred-decisions-log.md) | 추론·가정 |
-| [PRD.md](PRD.md) | 제품 범위 |
-| [AGENTS.md](../AGENTS.md) | 에이전트 Git·검증 |
-| [integrations-checklist.md](integrations-checklist.md) | 연동 체크 |
-| [superpowers/specs/](superpowers/specs/) | 승인된 설계 |
-| [codex-handoff.md](codex-handoff.md) | **Codex CLI** 복붙·resume |
+| 문서                                                           | 용도                      |
+| -------------------------------------------------------------- | ------------------------- |
+| [session-handoff-and-status.md](session-handoff-and-status.md) | 구현 스냅샷 §0            |
+| [session-context-digest.md](session-context-digest.md)         | 짧은 재개                 |
+| [inferred-decisions-log.md](inferred-decisions-log.md)         | 추론·가정                 |
+| [PRD.md](PRD.md)                                               | 제품 범위                 |
+| [AGENTS.md](../AGENTS.md)                                      | 에이전트 Git·검증         |
+| [integrations-checklist.md](integrations-checklist.md)         | 연동 체크                 |
+| [superpowers/specs/](superpowers/specs/)                       | 승인된 설계               |
+| [codex-handoff.md](codex-handoff.md)                           | **Codex CLI** 복붙·resume |
 
 ---
 

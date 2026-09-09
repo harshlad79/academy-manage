@@ -7,7 +7,9 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-05-29 — **학부모 납부 안내 알림**: `/payments` 미납 **SMS·이메일·푸시**(`PARENT_NOTIFY_*_ENABLED`); `/p/settings` SMS·이메일·푸시 동의·구독 ID. **Lead·대기·플랫폼 문의·trial** — 이전과 동일.
+**최근 동기화**: 2026-09-10 — 문서↔소스 대조 검증 완료. 기능 범위는 2026-05-29와 동일: **학부모 납부 안내 알림**(`/payments` 미납 **SMS·이메일·푸시**, `PARENT_NOTIFY_*_ENABLED`), `/p/settings` 동의·구독 ID, **Lead·대기·플랫폼 문의·trial**. 검증 4종 통과 확인(`npm run check` 0오류, `npm test` 27파일/129테스트, `npm run lint`, `npm run build`).
+
+**브랜치 상태(2026-09-10 실측)**: 모든 작업은 **`main`**(=`origin/main`). **`feat/platform-invite`** 는 `main`보다 24커밋 뒤처진 상태로 최신 커밋 없음 — PR 베이스는 `main` 기준.
 
 ### 프로젝트·스택
 
@@ -114,7 +116,7 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 
 ## 5. 핵심 파일
 
-`src/lib/server/models/{academy,academy-inquiry,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `academy-trial.ts`, `platform-inquiry-approve.ts`, `active-academy.ts`, `invite-consume.ts`, `invite-mail.ts`, `invite-email-meta.ts`, `teacher-membership-link.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**` (`academy-inquiry`, `platform/inquiries`, `trial-expired`)
+`src/lib/server/models/{academy,academy-inquiry,lead,student,teacher,course,enrollment,attendance,attendance-audit-log,invoice-line,payment,bank-deposit,academy-membership,academy-invite,makeup-session,parent-student-link}.ts`, `academy-trial.ts`, `platform-inquiry-approve.ts`, `active-academy.ts`, `invite-consume.ts`, `invite-mail.ts`, `invite-email-meta.ts`, `lead-convert.ts`, `lead-enrolled-at.ts`, `teacher-membership-link.ts`, `rbac.ts`, `academy-scope.ts`, 라우트 `src/routes/**` (`academy-inquiry`, `apply`, `leads`, `platform/inquiries`, `trial-expired`)
 
 ---
 
