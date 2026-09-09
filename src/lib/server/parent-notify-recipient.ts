@@ -16,6 +16,8 @@ export type PaymentNotifyEmailRecipient = {
 
 export type PaymentNotifyPushRecipient = {
 	endpoint: string;
+	p256dh: string | null;
+	auth: string | null;
 	parentUserId: string;
 };
 
@@ -123,12 +125,21 @@ export async function resolvePaymentNotifyPushRecipients(
 			sawLinkWithoutConsent = true;
 			continue;
 		}
-		const endpoint = profile.pushSubscriptionEndpoint?.trim();
-		if (!endpoint || endpoint.length < 8) {
+		const sub = profile.pushSubscription?.endpoint
+			? profile.pushSubscription
+			: profile.pushSubscriptionEndpoint?.trim()
+				? { endpoint: profile.pushSubscriptionEndpoint.trim(), p256dh: null, auth: null }
+				: null;
+		if (!sub || sub.endpoint.length < 8) {
 			sawLinkWithoutSubscription = true;
 			continue;
 		}
-		recipients.push({ endpoint, parentUserId: link.parentUserId });
+		recipients.push({
+			endpoint: sub.endpoint,
+			p256dh: sub.p256dh,
+			auth: sub.auth,
+			parentUserId: link.parentUserId
+		});
 	}
 
 	if (recipients.length > 0) return { ok: true, recipients };

@@ -13,6 +13,7 @@ type ProfileFields = {
 	emailNotifyConsentAt?: Date | null;
 	pushNotifyConsentAt?: Date | null;
 	pushSubscriptionEndpoint?: string | null;
+	pushSubscription?: { endpoint: string; keys: { p256dh: string; auth: string } } | null;
 };
 
 async function writeProfileLive(userId: string, fields: ProfileFields): Promise<void> {
@@ -76,6 +77,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		emailConsent,
 		pushConsent,
 		pushSubscriptionEndpoint,
+		pushConfigured: Boolean(
+			env.PUSH_VAPID_PUBLIC_KEY?.trim() && env.PUSH_VAPID_PRIVATE_KEY?.trim()
+		),
+		vapidPublicKey: env.PUSH_VAPID_PUBLIC_KEY?.trim() ?? '',
 		accountEmail,
 		isMockAuth: isMockAuthMode()
 	};
@@ -95,11 +100,36 @@ export const actions: Actions = {
 		const pushAgree = fd.get('pushNotifyConsent') === 'on';
 		const pushSubRaw = fd.get('pushSubscriptionEndpoint')?.toString() ?? '';
 		const pushSubTrim = pushSubRaw.trim();
+		const pushSubJsonRaw = fd.get('pushSubscriptionJson')?.toString() ?? '';
+		let pushSubscription: ProfileFields['pushSubscription'] = null;
+		if (pushSubJsonRaw.trim()) {
+			try {
+				const parsed = JSON.parse(pushSubJsonRaw) as {
+					endpoint?: unknown;
+					keys?: { p256dh?: unknown; auth?: unknown };
+				};
+				const endpoint = typeof parsed.endpoint === 'string' ? parsed.endpoint.trim() : '';
+				const p256dh = typeof parsed.keys?.p256dh === 'string' ? parsed.keys.p256dh : '';
+				const auth = typeof parsed.keys?.auth === 'string' ? parsed.keys.auth : '';
+				if (!endpoint.startsWith('https://') || !p256dh || !auth) {
+					return fail(400, { error: '푸시 구독 정보 형식이 올바르지 않습니다.' });
+				}
+				pushSubscription = { endpoint, keys: { p256dh, auth } };
+			} catch {
+				return fail(400, { error: '푸시 구독 정보를 해석할 수 없습니다.' });
+			}
+		}
+		const pushSubFinal = pushSubscription?.endpoint ?? pushSubTrim;
 		const phone = phoneRaw.trim() ? normalizeInvitePhone(phoneRaw) : null;
 		if (phoneRaw.trim() && !phone) {
 			return fail(400, { error: '휴대번호 형식이 올바르지 않습니다(010).' });
 		}
-		if (pushAgree && pushSubTrim.length > 0 && pushSubTrim.length < 8) {
+		if (
+			pushAgree &&
+			pushSubscription === null &&
+			pushSubFinal.length > 0 &&
+			pushSubFinal.length < 8
+		) {
 			return fail(400, { error: '푸시 구독 ID는 8자 이상이어야 합니다(스텁·개발용).' });
 		}
 		if (isMockAuthMode()) {
@@ -111,7 +141,8 @@ export const actions: Actions = {
 				smsMarketingConsentAt: smsAgree ? new Date() : null,
 				emailNotifyConsentAt: emailAgree ? new Date() : null,
 				pushNotifyConsentAt: pushAgree ? new Date() : null,
-				pushSubscriptionEndpoint: pushSubTrim.length > 0 ? pushSubTrim : null
+				pushSubscriptionEndpoint: pushSubFinal.length > 0 ? pushSubFinal : null,
+				pushSubscription
 			});
 		} catch (e) {
 			console.error('[p/settings]', e);

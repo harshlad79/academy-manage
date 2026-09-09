@@ -1,6 +1,12 @@
 import { MongoClient } from 'mongodb';
 import { env } from '$env/dynamic/private';
 
+export type UserProfilePushSubscription = {
+	endpoint: string;
+	p256dh: string | null;
+	auth: string | null;
+};
+
 export type UserProfileNotifyFields = {
 	phone: string | null;
 	smsMarketingConsentAt: Date | null;
@@ -8,10 +14,25 @@ export type UserProfileNotifyFields = {
 	emailNotifyConsentAt: Date | null;
 	pushNotifyConsentAt: Date | null;
 	pushSubscriptionEndpoint: string | null;
+	pushSubscription: UserProfilePushSubscription | null;
 };
 
 /** @deprecated Use readUserProfileNotifyFields */
 export type UserProfileSmsFields = Pick<UserProfileNotifyFields, 'phone' | 'smsMarketingConsentAt'>;
+
+function parsePushSubscription(raw: unknown): UserProfilePushSubscription | null {
+	if (!raw || typeof raw !== 'object') return null;
+	const rec = raw as Record<string, unknown>;
+	const endpoint = typeof rec.endpoint === 'string' ? rec.endpoint : null;
+	if (!endpoint) return null;
+	const keys =
+		rec.keys && typeof rec.keys === 'object' ? (rec.keys as Record<string, unknown>) : {};
+	return {
+		endpoint,
+		p256dh: typeof keys.p256dh === 'string' ? keys.p256dh : null,
+		auth: typeof keys.auth === 'string' ? keys.auth : null
+	};
+}
 
 function parseProfileDoc(doc: Record<string, unknown> | null): UserProfileNotifyFields {
 	return {
@@ -23,7 +44,8 @@ function parseProfileDoc(doc: Record<string, unknown> | null): UserProfileNotify
 			doc?.emailNotifyConsentAt instanceof Date ? doc.emailNotifyConsentAt : null,
 		pushNotifyConsentAt: doc?.pushNotifyConsentAt instanceof Date ? doc.pushNotifyConsentAt : null,
 		pushSubscriptionEndpoint:
-			typeof doc?.pushSubscriptionEndpoint === 'string' ? doc.pushSubscriptionEndpoint : null
+			typeof doc?.pushSubscriptionEndpoint === 'string' ? doc.pushSubscriptionEndpoint : null,
+		pushSubscription: parsePushSubscription(doc?.pushSubscription)
 	};
 }
 
@@ -39,7 +61,8 @@ export async function readUserProfileNotifyFields(
 			email: null,
 			emailNotifyConsentAt: null,
 			pushNotifyConsentAt: null,
-			pushSubscriptionEndpoint: null
+			pushSubscriptionEndpoint: null,
+			pushSubscription: null
 		};
 	}
 	const client = new MongoClient(url);
@@ -56,7 +79,8 @@ export async function readUserProfileNotifyFields(
 						email: 1,
 						emailNotifyConsentAt: 1,
 						pushNotifyConsentAt: 1,
-						pushSubscriptionEndpoint: 1
+						pushSubscriptionEndpoint: 1,
+						pushSubscription: 1
 					}
 				}
 			);

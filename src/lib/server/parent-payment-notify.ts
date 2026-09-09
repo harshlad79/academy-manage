@@ -206,7 +206,12 @@ export async function notifyParentsPaymentDuePush(
 
 	for (const recipient of resolved.recipients) {
 		const result = await sendPaymentDuePush(
-			{ endpoint: recipient.endpoint, ...payloadBase(input) },
+			{
+				endpoint: recipient.endpoint,
+				p256dh: recipient.p256dh,
+				auth: recipient.auth,
+				...payloadBase(input)
+			},
 			{ academyId: input.academyId }
 		);
 		if (result.status === 'sent') {

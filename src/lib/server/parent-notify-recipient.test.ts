@@ -35,7 +35,8 @@ describe('resolvePaymentNotifySmsRecipients', () => {
 			email: null,
 			emailNotifyConsentAt: null,
 			pushNotifyConsentAt: null,
-			pushSubscriptionEndpoint: null
+			pushSubscriptionEndpoint: null,
+			pushSubscription: null
 		});
 
 		const r = await resolvePaymentNotifySmsRecipients(academyId, studentId);
@@ -64,7 +65,8 @@ describe('resolvePaymentNotifyEmailRecipients', () => {
 			email: 'parent@example.com',
 			emailNotifyConsentAt: new Date(),
 			pushNotifyConsentAt: null,
-			pushSubscriptionEndpoint: null
+			pushSubscriptionEndpoint: null,
+			pushSubscription: null
 		});
 
 		const r = await resolvePaymentNotifyEmailRecipients(academyId, studentId);
@@ -84,7 +86,8 @@ describe('resolvePaymentNotifyEmailRecipients', () => {
 			email: 'parent@example.com',
 			emailNotifyConsentAt: null,
 			pushNotifyConsentAt: null,
-			pushSubscriptionEndpoint: null
+			pushSubscriptionEndpoint: null,
+			pushSubscription: null
 		});
 
 		const r = await resolvePaymentNotifyEmailRecipients(academyId, studentId);
@@ -100,7 +103,7 @@ describe('resolvePaymentNotifyPushRecipients', () => {
 		vi.clearAllMocks();
 	});
 
-	it('푸시 동의·구독 ID가 있으면 수신자 반환', async () => {
+	it('푸시 동의·구독(keys 포함)이 있으면 수신자 반환', async () => {
 		vi.mocked(ParentStudentLink.find).mockReturnValue({
 			lean: vi.fn().mockResolvedValue([{ parentUserId: 'parent-1' }])
 		} as never);
@@ -110,13 +113,53 @@ describe('resolvePaymentNotifyPushRecipients', () => {
 			email: null,
 			emailNotifyConsentAt: null,
 			pushNotifyConsentAt: new Date(),
-			pushSubscriptionEndpoint: 'https://push.stub/endpoint-1'
+			pushSubscriptionEndpoint: 'https://push.stub/endpoint-1',
+			pushSubscription: {
+				endpoint: 'https://push.stub/endpoint-1',
+				p256dh: 'k-p256dh',
+				auth: 'k-auth'
+			}
 		});
 
 		const r = await resolvePaymentNotifyPushRecipients(academyId, studentId);
 		expect(r).toEqual({
 			ok: true,
-			recipients: [{ endpoint: 'https://push.stub/endpoint-1', parentUserId: 'parent-1' }]
+			recipients: [
+				{
+					endpoint: 'https://push.stub/endpoint-1',
+					p256dh: 'k-p256dh',
+					auth: 'k-auth',
+					parentUserId: 'parent-1'
+				}
+			]
+		});
+	});
+
+	it('레거시 endpoint-only 구독은 keys null로 반환', async () => {
+		vi.mocked(ParentStudentLink.find).mockReturnValue({
+			lean: vi.fn().mockResolvedValue([{ parentUserId: 'parent-1' }])
+		} as never);
+		vi.mocked(readUserProfileNotifyFields).mockResolvedValue({
+			phone: null,
+			smsMarketingConsentAt: null,
+			email: null,
+			emailNotifyConsentAt: null,
+			pushNotifyConsentAt: new Date(),
+			pushSubscriptionEndpoint: 'https://push.stub/endpoint-legacy',
+			pushSubscription: null
+		});
+
+		const r = await resolvePaymentNotifyPushRecipients(academyId, studentId);
+		expect(r).toEqual({
+			ok: true,
+			recipients: [
+				{
+					endpoint: 'https://push.stub/endpoint-legacy',
+					p256dh: null,
+					auth: null,
+					parentUserId: 'parent-1'
+				}
+			]
 		});
 	});
 });
