@@ -7,9 +7,9 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-09-10 — 문서↔소스 대조 검증 완료. 기능 범위는 2026-05-29와 동일: **학부모 납부 안내 알림**(`/payments` 미납 **SMS·이메일·푸시**, `PARENT_NOTIFY_*_ENABLED`), `/p/settings` 동의·구독 ID, **Lead·대기·플랫폼 문의·trial**. 검증 4종 통과 확인(`npm run check` 0오류, `npm test` 27파일/129테스트, `npm run lint`, `npm run build`).
+**최근 동기화**: 2026-09-10 — 문서↔소스 대조 검증 + **외부 계약 불필요 슬라이스 구현 완료**: ① PRD §6.6 **기능 플래그 3종**(`billingAutoImport`·`parentPortalEnabled`·`communicationsEnabled`, `/platform/academies` 토글, `/p`·`/communications` 게이트), ② **Web Push 실발송**(`PUSH_VAPID_*` + `static/sw.js` + `/p/settings` 구독, 키 없으면 스텁), ③ **입금 자동 매칭 제안**(`billingAutoImport` 시 미매칭 입금에 제안 라인 미리선택 — 확정은 수동). 또한 **초대→가입 딥링크·다학원 전환 UI는 기존 구현 확인**(문서 stale 정정). 기능 범위 이전 항목 — **학부모 납부 안내 알림**(`/payments` 미납 SMS·이메일·푸시), `/p/settings` 동의, **Lead·대기·플랫폼 문의·trial**. 검증 4종 통과.
 
-**브랜치 상태(2026-09-10 실측)**: 모든 작업은 **`main`**(=`origin/main`). **`feat/platform-invite`** 는 `main`보다 24커밋 뒤처진 상태로 최신 커밋 없음 — PR 베이스는 `main` 기준.
+**브랜치 상태(2026-09-10 실측)**: 모든 작업은 **`main`**(=`origin/main`, GitHub 기본 브랜치도 main으로 전환). stale 브랜치(`feat/platform-invite`·`cursor/env-setup-780a`)는 원격에서 삭제, Cursor 전체컨텍스트 문서는 [`codex-full-context.md`](codex-full-context.md) 로 보존. 로컬 `harshlad79/bullhead`는 워크트리 사용 중 보존(병합 완료 상태).
 
 ### 프로젝트·스택
 
@@ -48,7 +48,7 @@
 
 ### 다음 과제(후보)
 
-**은행 오픈뱅킹 API** 실연동, 학부모 **푸시·이메일 알림**, SMS 실발송(알리고·솔라피), 멀티테넌트·Taskplane 후속.
+**외부 계약 필요(코드 스텁 완료)**: 은행 오픈뱅킹 실연동(자동 매칭 제안까지 완료, 실 API 어댑터·계약 대기), SMS 실발송(알리고·솔라피 — `invite-sms.ts`·`parent-notify-sms.ts` 교체). **자체 구현 가능 잔여**: 소통·공지 발송 기능, E2E Playwright.
 
 ### 짧은 재개(토큰 절약)
 
@@ -112,7 +112,7 @@ agent-autonomy-policy.md를 따르고 추론은 inferred-decisions-log에 남긴
 | 학원 등록 문의(공개)  | **`/academy-inquiry`** — `AcademyInquiry` 접수(`status=new`); trial 만료 스태ff **`/trial-expired`**                                                                                                                                                                                                     |
 | 학부모 포털(읽기)     | **`/p`** — 연결 자녀·수강·미납·납부 이력·출결, `ParentStudentLink`                                                                                                                                                                                                                                       |
 
-**후속(PRD 대비 미구현·확장)**: 은행 API 실연동, 학부모 영수증·알림, 수락 전용 **가입(회원가입) 플로**와의 딥링크, 다학원·연동 잔여.
+**후속(PRD 대비 미구현·확장)**: 은행 오픈뱅킹 **실연동**(계약 전, 스텁+자동 매칭 제안까지 완료), SMS **실발송**(알리고·솔라피 계약 전, 스텁), 소통·공지 발송 기능, E2E Playwright. ~~수락 전용 가입 플로 딥링크~~·~~다학원 전환~~ — **구현 확인 완료**(`/auth/sign-in?callbackURL=` 경유 가입 후 수락, 내비 「활성 학원」 전환).
 
 ## 5. 핵심 파일
 

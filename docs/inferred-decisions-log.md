@@ -22,6 +22,19 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-09-10 — 기능 플래그·Web Push·입금 매칭 제안(외부 계약 불필요 슬라이스)
+
+- **맥락**: 사용자 지시「외부 연결 없이 완료 가능한 것 전부」— PRD §6.6 플래그, 푸시 실발송, §7.3 입금 자동화의 코드 가능 부분.
+- **추론한 결정**:
+  - **플래그 기본값**: `parentPortalEnabled`·`communicationsEnabled` = `true`(현행 동작 보존), `billingAutoImport` = `false`. 기존 문서 미설정 필드는 기본값 취급(`academy-flags.ts`). 토글 UI는 **`/platform/academies`** 표 안(super_admin).
+  - **Web Push**: `PUSH_VAPID_PUBLIC_KEY`·`PUSH_VAPID_PRIVATE_KEY`(·선택 `PUSH_VAPID_SUBJECT`) + 구독 키(`pushSubscription` = `{endpoint, keys.p256dh, keys.auth}`를 user 컬렉션에 저장)가 모두 있으면 `web-push` 실발송, 아니면 기존 스텁 sent. 레거시 `pushSubscriptionEndpoint`-only 구독은 keys null로 하위호환. `sendPaymentDuePush`에 `sendWebPush` 주입점 추가(테스트용).
+  - **입금 자동 매칭**: 제안까지만 자동(`deposit-matching.ts` 순수 함수 — 금액 일치 + memo에 학생명 포함 → high, 후보 1개 → medium), **확정은 기존 `matchDeposit` 수동 경로** 그대로(PRD §7.3 수기 수납 병행). 제안 UI는 `billingAutoImport` 학원의 `/payments` 미매칭 입금에 라인 미리선택+신뢰도 배지.
+  - **재확인**: 초대→가입 딥링크(`need_login` → `/auth/sign-in?callbackURL=` 가입 후 수락 폼 재제출)·다학원 전환(`buildAcademySwitcherData` + `setActiveAcademy`)은 **이미 구현되어 있었음** — 핸드오프 문서 후속 목록 stale 정정.
+  - **`scripts/seed.ts:156`** `enb[0]._id` → `enb._id` 수정(Cursor 문서에서 지적된 실버그, `enb`가 이미 문서 객체).
+  - **원격 정리**: GitHub 기본 브랜치 `main` 전환, stale 브랜치 원격 삭제, `docs/codex-full-context.md` 신설(Cursor 전체컨텍스트 문서 보존).
+- **대안(포기)**: 플래그 토글을 `/settings/members`에 두기(원장 페이지 범위 벗어남), Web Push를 FCM 전환(외부 의존·자체 키 발급 불필요한 Web Push가 요구에 부합), 매칭 자동 확정(PRD 수기 병행 원칙 위반), 가입 플로 신규 구현(기존 구현 재발견).
+- **검증**: `npm run check` · `npm test` · `npm run lint` · `npm run build` 슬라이스마다 실행.
+
 ### 2026-05-29 — 학부모 납부 안내 이메일·푸시 스텁
 
 - **맥락**: 후속 C — SMS 외 이메일·푸시 채널.
