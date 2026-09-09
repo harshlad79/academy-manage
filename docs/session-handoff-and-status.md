@@ -7,7 +7,7 @@
 
 ## 0. 최근 동기화 (대화 시작 시 먼저 읽기)
 
-**최근 동기화**: 2026-09-10 — 문서↔소스 대조 검증 + **외부 계약 불필요 슬라이스 구현 완료**: ① PRD §6.6 **기능 플래그 3종**(`billingAutoImport`·`parentPortalEnabled`·`communicationsEnabled`, `/platform/academies` 토글, `/p`·`/communications` 게이트), ② **Web Push 실발송**(`PUSH_VAPID_*` + `static/sw.js` + `/p/settings` 구독, 키 없으면 스텁), ③ **입금 자동 매칭 제안**(`billingAutoImport` 시 미매칭 입금에 제안 라인 미리선택 — 확정은 수동). 또한 **초대→가입 딥링크·다학원 전환 UI는 기존 구현 확인**(문서 stale 정정). 기능 범위 이전 항목 — **학부모 납부 안내 알림**(`/payments` 미납 SMS·이메일·푸시), `/p/settings` 동의, **Lead·대기·플랫폼 문의·trial**. 검증 4종 통과.
+**최근 동기화**: 2026-09-10 — 문서↔소스 대조 검증 + **외부 계약 불필요 슬라이스 구현 완료**: ① PRD §6.6 **기능 플래그 3종**(`billingAutoImport`·`parentPortalEnabled`·`communicationsEnabled`, `/platform/academies` 토글, `/p`·`/communications` 게이트), ② **Web Push 실발송**(`PUSH_VAPID_*` + `static/sw.js` + `/p/settings` 구독, 키 없으면 스텁), ③ **입금 자동 매칭 제안**(`billingAutoImport` 시 미매칭 입금에 제안 라인 미리선택 — 확정은 수동), ④ **학원 공지**(`Announcement` — `/communications` 관리자·행정 발행, `/p` 게이트 하 열람). 또한 **초대→가입 딥링크·다학원 전환 UI는 기존 구현 확인**(문서 stale 정정). 기능 범위 이전 항목 — **학부모 납부 안내 알림**(`/payments` 미납 SMS·이메일·푸시), `/p/settings` 동의, **Lead·대기·플랫폼 문의·trial**. 검증 4종 통과.
 
 **브랜치 상태(2026-09-10 실측)**: 모든 작업은 **`main`**(=`origin/main`, GitHub 기본 브랜치도 main으로 전환). stale 브랜치(`feat/platform-invite`·`cursor/env-setup-780a`)는 원격에서 삭제, Cursor 전체컨텍스트 문서는 [`codex-full-context.md`](codex-full-context.md) 로 보존. 로컬 `harshlad79/bullhead`는 워크트리 사용 중 보존(병합 완료 상태).
 
@@ -48,7 +48,7 @@
 
 ### 다음 과제(후보)
 
-**외부 계약 필요(코드 스텁 완료)**: 은행 오픈뱅킹 실연동(자동 매칭 제안까지 완료, 실 API 어댑터·계약 대기), SMS 실발송(알리고·솔라피 — `invite-sms.ts`·`parent-notify-sms.ts` 교체). **자체 구현 가능 잔여**: 소통·공지 발송 기능, E2E Playwright.
+**외부 계약 필요(코드 스텁 완료)**: 은행 오픈뱅킹 실연동(자동 매칭 제안까지 완료, 실 API 어댑터·계약 대기), SMS 실발송(알리고·솔라피 — `invite-sms.ts`·`parent-notify-sms.ts` 교체). **자체 구현 잔여**: E2E Playwright(문서상 MVP 후 실계정 조건 — `docs/개발자가-처리할-항목.md` §5), 공지 SMS·푸시 대량 발송(SMS 계약 후).
 
 ### 짧은 재개(토큰 절약)
 

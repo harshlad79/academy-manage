@@ -22,6 +22,16 @@
 
 <!-- 새 항목은 이 섹션 맨 위(가장 최근 날짜 아래가 아니라, 기록 제목 최상단)에 추가 -->
 
+### 2026-09-10 — 학원 공지(Announcement) 포털 게시
+
+- **맥락**: 후속「소통·공지」— 외부 계약 불필요한 인앱 공지. SMS·푸시 대량 발송은 계약 후 과제로 분리.
+- **추론한 결정**:
+  - **`Announcement` 모델**: `academyId`·`title`(≤120)·`body`(≤4000)·`createdByUserId`, 인덱스 `{academyId:1, createdAt:-1}`.
+  - **발행 권한**: **관리자·행정·super_admin만**(`gateCommunicationsAction` 신설, `isElevatedStaffRole`). 강사는 담당 반 스코프라 학원 단 공지에서 제외.
+  - **열람**: `/communications` 최근 20건 목록·삭제, `/p`는 `communicationsEnabled`·`parentPortalEnabled` 게이트 하 최근 10건. `communicationsEnabled` off면 학부모에게도 숨김(PRD §6.6 플래그 의미 존중).
+- **대안(포기)**: 강사 발행 허용(스코프 모호), 공지 대상 반 선택(MVP 후), 발행 시 푸시 자동 발송(대량 발송은 SMS 계약·동의 정책과 함께 별도 과제).
+- **검증**: `npm run check` · `npm test`(146 통과) · `npm run lint` · `npm run build`.
+
 ### 2026-09-10 — 기능 플래그·Web Push·입금 매칭 제안(외부 계약 불필요 슬라이스)
 
 - **맥락**: 사용자 지시「외부 연결 없이 완료 가능한 것 전부」— PRD §6.6 플래그, 푸시 실발송, §7.3 입금 자동화의 코드 가능 부분.
