@@ -38,10 +38,10 @@ IDE·Cursor CLI 에이전트가 이 저장소에서 작업할 때의 **기본 �
 
 ### 서비스 구성
 
-| 서비스 | 포트 | 필수 | 비고 |
-|--------|------|------|------|
-| SvelteKit (Vite) | 5173 | 필수 | `npm run dev` |
-| MongoDB | 27017 | 필수 | `mongod --fork --logpath /tmp/mongod.log --dbpath /data/db` |
+| 서비스           | 포트  | 필수 | 비고                                                        |
+| ---------------- | ----- | ---- | ----------------------------------------------------------- |
+| SvelteKit (Vite) | 5173  | 필수 | `npm run dev`                                               |
+| MongoDB          | 27017 | 필수 | `mongod --fork --logpath /tmp/mongod.log --dbpath /data/db` |
 
 ### 개발 서버 실행 순서
 
