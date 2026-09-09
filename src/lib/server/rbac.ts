@@ -179,6 +179,15 @@ export function gateFinanceAction(locals: App.Locals): GateOk | GateFail {
 	return g;
 }
 
+export function gateCommunicationsAction(locals: App.Locals): GateOk | GateFail {
+	const g = gateStaffMember(locals);
+	if (!g.ok) return g;
+	if (!isElevatedStaffRole(g.membership.role)) {
+		return { ok: false, status: 403, message: '공지 발행은 관리자·행정만 수행할 수 있습니다.' };
+	}
+	return g;
+}
+
 export function gateAttendanceWriteAction(
 	locals: App.Locals,
 	courseTeacherId: Types.ObjectId

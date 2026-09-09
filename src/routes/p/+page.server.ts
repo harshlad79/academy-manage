@@ -9,6 +9,8 @@ import { ParentStudentLink } from '$lib/server/models/parent-student-link';
 import { Student } from '$lib/server/models/student';
 import { Academy } from '$lib/server/models/academy';
 import { academyAllowsParentPortal } from '$lib/server/academy-flags';
+import { academyAllowsCommunications } from '$lib/server/academy-flags';
+import { Announcement } from '$lib/server/models/announcement';
 import { isPopulatedIdName } from '$lib/server/mongo-populate-guards';
 import type { PageServerLoad } from './$types';
 
@@ -19,6 +21,14 @@ function resolveAcademyDisplayName(): string {
 
 const RECENT_ATTENDANCE_CAP = 48;
 const PAYMENT_HISTORY_CAP = 40;
+const ANNOUNCEMENTS_CAP = 10;
+
+export type PortalAnnouncement = {
+	id: string;
+	title: string;
+	body: string;
+	createdAt: string;
+};
 
 function formatPaidAtSeoul(d: Date): string {
 	return new Intl.DateTimeFormat('ko-KR', {
@@ -43,14 +53,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 	try {
 		const { academyId } = await withAcademyScope();
 		const academyDoc = await Academy.findById(academyId)
-			.select('status parentPortalEnabled')
+			.select('status parentPortalEnabled communicationsEnabled')
 			.lean();
 		const academyOperationalStatus = academyDoc?.status === 'inactive' ? 'inactive' : 'active';
+		const communicationsEnabled = academyAllowsCommunications(academyDoc);
 		if (!academyAllowsParentPortal(academyDoc)) {
 			return {
 				academyDisplayName: resolveAcademyDisplayName(),
 				academyOperationalStatus,
 				parentPortalEnabled: false,
+				communicationsEnabled,
+				announcements: [] as PortalAnnouncement[],
 				students: [],
 				openInvoiceLines: [],
 				earliestOpenDueDate: null,
@@ -222,10 +235,25 @@ export const load: PageServerLoad = async ({ locals }) => {
 			};
 		});
 
+		const announcementRows = communicationsEnabled
+			? await Announcement.find({ academyId })
+					.sort({ createdAt: -1 })
+					.limit(ANNOUNCEMENTS_CAP)
+					.lean()
+			: [];
+		const announcements: PortalAnnouncement[] = announcementRows.map((a) => ({
+			id: a._id.toString(),
+			title: a.title,
+			body: a.body,
+			createdAt: a.createdAt.toISOString()
+		}));
+
 		return {
 			academyDisplayName: resolveAcademyDisplayName(),
 			academyOperationalStatus,
 			parentPortalEnabled: true,
+			communicationsEnabled,
+			announcements,
 			students,
 			openInvoiceLines,
 			earliestOpenDueDate,

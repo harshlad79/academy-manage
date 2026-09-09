@@ -102,6 +102,28 @@
 		</p>
 	{/if}
 
+	{#if data.communicationsEnabled && data.announcements.length > 0}
+		<div class="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/60 p-4">
+			<h2 class="text-sm font-semibold text-indigo-950">학원 공지</h2>
+			<ul class="mt-3 space-y-3">
+				{#each data.announcements as ann (ann.id)}
+					<li class="text-sm">
+						<p class="font-medium text-gray-900">{ann.title}</p>
+						<p class="mt-0.5 whitespace-pre-line text-gray-700">{ann.body}</p>
+						<p class="mt-1 text-xs text-gray-500">
+							{new Date(ann.createdAt).toLocaleDateString('ko-KR', {
+								year: 'numeric',
+								month: 'short',
+								day: 'numeric',
+								timeZone: 'Asia/Seoul'
+							})}
+						</p>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
+
 	{#if data.parentPortalEnabled && data.students.length === 0}
 		<p class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
 			등록된 자녀가 없습니다. 학원에서 학부모–자녀 연결 후 다시 확인하세요.
