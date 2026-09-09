@@ -81,6 +81,16 @@
 		</p>
 	{/if}
 
+	{#if !data.parentPortalEnabled}
+		<p
+			class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+			role="status"
+		>
+			이 학원에서는 <strong>학부모 포털</strong>이 비활성화되어 있습니다. 자녀 정보·납부 내용은
+			학원에 직접 문의하세요.
+		</p>
+	{/if}
+
 	{#if data.earliestOpenDueDate}
 		<p
 			class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
@@ -92,7 +102,7 @@
 		</p>
 	{/if}
 
-	{#if data.students.length === 0}
+	{#if data.parentPortalEnabled && data.students.length === 0}
 		<p class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
 			등록된 자녀가 없습니다. 학원에서 학부모–자녀 연결 후 다시 확인하세요.
 		</p>

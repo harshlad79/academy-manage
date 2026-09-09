@@ -1,4 +1,6 @@
 import { withAcademyScope } from '$lib/server/academy-scope';
+import { academyAllowsCommunications } from '$lib/server/academy-flags';
+import { Academy } from '$lib/server/models/academy';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { Lead } from '$lib/server/models/lead';
 import { ParentStudentLink } from '$lib/server/models/parent-student-link';
@@ -7,6 +9,7 @@ import { ensureStaffAcademyMember } from '$lib/server/rbac';
 import type { PageServerLoad } from './$types';
 
 const empty = {
+	communicationsEnabled: true,
 	parentStudentLinkCount: 0,
 	parentMembershipCount: 0,
 	studentCount: 0,
@@ -20,6 +23,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	ensureStaffAcademyMember(locals);
 	try {
 		const { academyId } = await withAcademyScope();
+		const academyDoc = await Academy.findById(academyId).select('communicationsEnabled').lean();
+		const communicationsEnabled = academyAllowsCommunications(academyDoc);
 		const [
 			parentStudentLinkCount,
 			parentMembershipCount,
@@ -27,15 +32,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 			leadNewCount,
 			leadWaitlistedCount,
 			leadConvertedCount
-		] = await Promise.all([
-			ParentStudentLink.countDocuments({ academyId }),
-			AcademyMembership.countDocuments({ academyId, role: 'parent' }),
-			Student.countDocuments({ academyId }),
-			Lead.countDocuments({ academyId, status: 'new' }),
-			Lead.countDocuments({ academyId, status: 'waitlisted' }),
-			Lead.countDocuments({ academyId, status: 'converted' })
-		]);
+		] = communicationsEnabled
+			? await Promise.all([
+					ParentStudentLink.countDocuments({ academyId }),
+					AcademyMembership.countDocuments({ academyId, role: 'parent' }),
+					Student.countDocuments({ academyId }),
+					Lead.countDocuments({ academyId, status: 'new' }),
+					Lead.countDocuments({ academyId, status: 'waitlisted' }),
+					Lead.countDocuments({ academyId, status: 'converted' })
+				])
+			: [0, 0, 0, 0, 0, 0];
 		return {
+			communicationsEnabled,
 			parentStudentLinkCount,
 			parentMembershipCount,
 			studentCount,

@@ -69,6 +69,7 @@
 					<tr>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">이름</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">상태</th>
+						<th class="px-4 py-2 text-left font-medium text-gray-700">기능 플래그</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">ID</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">멤버</th>
 						<th class="px-4 py-2 text-left font-medium text-gray-700">작업</th>
@@ -92,6 +93,48 @@
 								{:else}
 									{row.status}
 								{/if}
+							</td>
+							<td class="px-4 py-2">
+								<form
+									method="POST"
+									action="?/updateFlags"
+									class="flex flex-col gap-1 text-xs text-gray-700"
+								>
+									<input type="hidden" name="academyId" value={row.id} />
+									<label class="inline-flex items-center gap-1.5">
+										<input
+											type="checkbox"
+											name="billingAutoImport"
+											checked={row.billingAutoImport}
+											class="h-3.5 w-3.5"
+										/>
+										입금 자동화
+									</label>
+									<label class="inline-flex items-center gap-1.5">
+										<input
+											type="checkbox"
+											name="parentPortalEnabled"
+											checked={row.parentPortalEnabled}
+											class="h-3.5 w-3.5"
+										/>
+										학부모 포털
+									</label>
+									<label class="inline-flex items-center gap-1.5">
+										<input
+											type="checkbox"
+											name="communicationsEnabled"
+											checked={row.communicationsEnabled}
+											class="h-3.5 w-3.5"
+										/>
+										소통·공지
+									</label>
+									<button
+										type="submit"
+										class="mt-1 w-fit rounded bg-gray-100 px-2 py-1 font-medium text-gray-700 hover:bg-gray-200"
+									>
+										저장
+									</button>
+								</form>
 							</td>
 							<td class="px-4 py-2 font-mono text-xs text-gray-600">{row.id}</td>
 							<td class="px-4 py-2">
@@ -134,7 +177,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td class="px-4 py-6 text-center text-gray-500" colspan="5"
+							<td class="px-4 py-6 text-center text-gray-500" colspan="6"
 								>등록된 학원이 없습니다.</td
 							>
 						</tr>

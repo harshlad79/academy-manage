@@ -6,6 +6,9 @@ export type AcademyDoc = {
 	name: string;
 	status: AcademyStatus;
 	trialEndsAt?: Date;
+	billingAutoImport: boolean;
+	parentPortalEnabled: boolean;
+	communicationsEnabled: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -19,7 +22,10 @@ const AcademySchema = new Schema<AcademyDoc>(
 			required: true,
 			default: 'active'
 		},
-		trialEndsAt: { type: Date }
+		trialEndsAt: { type: Date },
+		billingAutoImport: { type: Boolean, default: false },
+		parentPortalEnabled: { type: Boolean, default: true },
+		communicationsEnabled: { type: Boolean, default: true }
 	},
 	{ timestamps: true }
 );

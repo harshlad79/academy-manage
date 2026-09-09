@@ -8,6 +8,7 @@ import { Payment } from '$lib/server/models/payment';
 import { ParentStudentLink } from '$lib/server/models/parent-student-link';
 import { Student } from '$lib/server/models/student';
 import { Academy } from '$lib/server/models/academy';
+import { academyAllowsParentPortal } from '$lib/server/academy-flags';
 import { isPopulatedIdName } from '$lib/server/mongo-populate-guards';
 import type { PageServerLoad } from './$types';
 
@@ -41,8 +42,24 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	try {
 		const { academyId } = await withAcademyScope();
-		const academyDoc = await Academy.findById(academyId).select('status').lean();
+		const academyDoc = await Academy.findById(academyId)
+			.select('status parentPortalEnabled')
+			.lean();
 		const academyOperationalStatus = academyDoc?.status === 'inactive' ? 'inactive' : 'active';
+		if (!academyAllowsParentPortal(academyDoc)) {
+			return {
+				academyDisplayName: resolveAcademyDisplayName(),
+				academyOperationalStatus,
+				parentPortalEnabled: false,
+				students: [],
+				openInvoiceLines: [],
+				earliestOpenDueDate: null,
+				paymentHistory: [],
+				recentAttendance: [],
+				recentAttendanceCap: RECENT_ATTENDANCE_CAP,
+				paymentHistoryCap: PAYMENT_HISTORY_CAP
+			};
+		}
 		const links = await ParentStudentLink.find({ academyId, parentUserId: uid })
 			.sort({ createdAt: 1 })
 			.lean();
@@ -208,6 +225,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return {
 			academyDisplayName: resolveAcademyDisplayName(),
 			academyOperationalStatus,
+			parentPortalEnabled: true,
 			students,
 			openInvoiceLines,
 			earliestOpenDueDate,

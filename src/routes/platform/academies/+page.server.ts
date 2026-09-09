@@ -23,7 +23,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 				id: r._id.toString(),
 				name: r.name,
 				status: r.status,
-				trialEndsAt: r.trialEndsAt ? r.trialEndsAt.toISOString() : null
+				trialEndsAt: r.trialEndsAt ? r.trialEndsAt.toISOString() : null,
+				billingAutoImport: r.billingAutoImport === true,
+				parentPortalEnabled: r.parentPortalEnabled !== false,
+				communicationsEnabled: r.communicationsEnabled !== false
 			})),
 			dbError: null as string | null
 		};
@@ -36,6 +39,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 				name: string;
 				status: string;
 				trialEndsAt: string | null;
+				billingAutoImport: boolean;
+				parentPortalEnabled: boolean;
+				communicationsEnabled: boolean;
 			}[],
 			dbError: '학원 목록을 불러오지 못했습니다.'
 		};
@@ -70,6 +76,25 @@ export const actions: Actions = {
 		}
 		await connectDB();
 		await Academy.updateOne({ _id: id }, { $set: { status: 'inactive' } });
+		redirect(303, '/platform/academies');
+	},
+	updateFlags: async ({ request, locals }) => {
+		ensurePlatformSuperAdmin(locals);
+		const fd = await request.formData();
+		const idRaw = fd.get('academyId')?.toString()?.trim();
+		if (!idRaw || !isOidHex(idRaw)) return fail(400, { error: '잘못된 학원 ID입니다.' });
+		const id = new Types.ObjectId(idRaw);
+		await connectDB();
+		await Academy.updateOne(
+			{ _id: id },
+			{
+				$set: {
+					billingAutoImport: fd.get('billingAutoImport') === 'on',
+					parentPortalEnabled: fd.get('parentPortalEnabled') === 'on',
+					communicationsEnabled: fd.get('communicationsEnabled') === 'on'
+				}
+			}
+		);
 		redirect(303, '/platform/academies');
 	},
 	reactivateAcademy: async ({ request, locals }) => {
