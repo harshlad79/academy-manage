@@ -153,7 +153,7 @@ async function seed() {
 	]);
 	await InvoiceLine.create({
 		academyId: academyIdB,
-		enrollmentId: enb[0]._id,
+		enrollmentId: enb._id,
 		amountKrw: 95_000,
 		description: '5월 수강료(분원 샘플)',
 		dueDate: '2026-05-25',

@@ -39,8 +39,7 @@ mongod --fork --logpath /tmp/mongod.log --dbpath /data/db
 
 # 4. 시드 데이터
 npm run seed
-# ⚠️ scripts/seed.ts 151행 디스트럭처링 버그: `enb[0]._id` → `enb._id`
-# 에러 발생 시 메인 학원 데이터는 이미 삽입됨, 멤버십만 수동 보완 필요
+# 2026-09-10: 구 `enb[0]._id` 디스트럭처링 버그는 `enb._id`로 수정됨 — 정상 실행됨
 
 # 5. 개발 서버
 npm run dev   # → http://localhost:5173
