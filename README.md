@@ -14,6 +14,7 @@ SvelteKit 5, Tailwind 4, TypeScript strict, MongoDB + Mongoose, Better Auth(mock
 | [docs/session-handoff-and-status.md](docs/session-handoff-and-status.md) | 구현 스냅샷·재개 안내                      |
 | [docs/session-context-digest.md](docs/session-context-digest.md)         | 신규 대화용 짧은 요약                      |
 | [docs/current-status.md](docs/current-status.md)                         | 현재 Simulith 검증 현황·GitHub 재개 라우팅 |
+| [docs/local-run.md](docs/local-run.md)                                   | clone 후 서비스·서버 실행 명령             |
 | [AGENTS.md](AGENTS.md)                                                   | 에이전트·Git·검증 순서                     |
 
 ## 로컬 실행
