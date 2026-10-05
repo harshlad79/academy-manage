@@ -71,6 +71,7 @@
 		<form
 			method="POST"
 			action="?/create"
+			use:enhance
 			class="mt-6 flex flex-wrap items-end gap-3 border-t border-gray-200 pt-6"
 		>
 			<div>

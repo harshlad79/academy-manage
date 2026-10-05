@@ -3,7 +3,14 @@
 	import { resolve } from '$app/paths';
 	import type { PageData } from './$types';
 
-	type FormFlash = { error?: string; success?: boolean };
+	type FormFlash = {
+		error?: string;
+		success?: boolean;
+		name?: string;
+		grade?: string;
+		guardianName?: string;
+		guardianPhone?: string;
+	};
 
 	let { data, form }: { data: PageData; form?: FormFlash } = $props();
 </script>
@@ -31,7 +38,7 @@
 		</p>
 	{/if}
 
-	<form method="POST" action="?/update" class="mt-6 space-y-4">
+	<form method="POST" action="?/update" use:enhance class="mt-6 space-y-4">
 		<div>
 			<label for="name" class="block text-sm font-medium text-gray-700">이름</label>
 			<input
@@ -39,7 +46,7 @@
 				name="name"
 				required
 				maxlength="120"
-				value={data.student.name}
+				value={form?.name ?? data.student.name}
 				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
 			/>
 		</div>
@@ -49,7 +56,7 @@
 				id="grade"
 				name="grade"
 				maxlength="40"
-				value={data.student.grade}
+				value={form?.grade ?? data.student.grade}
 				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
 				placeholder="예: 고1"
 			/>
@@ -60,7 +67,7 @@
 				id="guardianName"
 				name="guardianName"
 				maxlength="80"
-				value={data.student.guardianName}
+				value={form?.guardianName ?? data.student.guardianName}
 				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
 				placeholder="선택"
 			/>
@@ -74,7 +81,7 @@
 				name="guardianPhone"
 				type="tel"
 				maxlength="20"
-				value={data.student.guardianPhone}
+				value={form?.guardianPhone ?? data.student.guardianPhone}
 				class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
 				placeholder="01012345678"
 			/>
@@ -106,7 +113,11 @@
 			action="?/createParentSmsInvite"
 			class="mt-4 flex flex-wrap items-end gap-3"
 		>
-			<input type="hidden" name="guardianPhone" value={data.student.guardianPhone} />
+			<input
+				type="hidden"
+				name="guardianPhone"
+				value={form?.guardianPhone ?? data.student.guardianPhone}
+			/>
 			<button
 				type="submit"
 				disabled={!data.student.guardianPhone}

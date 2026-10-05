@@ -13,6 +13,12 @@ import { Student } from '$lib/server/models/student';
 import { isPopulatedIdName } from '$lib/server/mongo-populate-guards';
 import { ensureDirectoryAccess, failFromGate, gateDirectoryAction } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationCreateEnrollment,
+	simulationDeleteEnrollment,
+	simulationEnrollments
+} from '$lib/simulation/sqlite';
 
 function isOid(id: string) {
 	return /^[a-f\d]{24}$/i.test(id);
@@ -22,6 +28,15 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	ensureDirectoryAccess(locals);
 	const studentId = url.searchParams.get('studentId')?.trim() ?? '';
 	const courseId = url.searchParams.get('courseId')?.trim() ?? '';
+	if (isSqliteSimulationMode()) {
+		const simulation = simulationEnrollments(studentId, courseId);
+		return {
+			...simulation,
+			filterStudentId: studentId,
+			filterCourseId: courseId,
+			dbError: null as string | null
+		};
+	}
 	try {
 		const { academyId } = await withAcademyScope();
 		const studentRows = await Student.find({ academyId }).sort({ name: 1 }).lean();
@@ -88,15 +103,27 @@ export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const studentId = String(data.get('studentId') ?? '');
+		const courseId = String(data.get('courseId') ?? '');
+		if (isSqliteSimulationMode()) {
+			if (!studentId) return fail(400, { error: '학생을 선택하세요.' });
+			if (!courseId) return fail(400, { error: '클래스를 선택하세요.' });
+			const result = simulationCreateEnrollment(studentId, courseId);
+			if (result === 'missing-student')
+				return fail(400, { error: '선택한 학생이 이 학원에 없습니다.' });
+			if (result === 'missing-course')
+				return fail(400, { error: '선택한 클래스가 이 학원에 없습니다.' });
+			if (result === 'duplicate')
+				return fail(400, { error: '이미 같은 클래스에 등록된 학생입니다.' });
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const studentId = String(data.get('studentId') ?? '');
-		const courseId = String(data.get('courseId') ?? '');
 		if (!isOid(studentId)) return fail(400, { error: '학생을 선택하세요.' });
 		if (!isOid(courseId)) return fail(400, { error: '클래스를 선택하세요.' });
 		const st = await Student.exists({ _id: studentId, academyId });
@@ -120,14 +147,19 @@ export const actions: Actions = {
 	delete: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const id = String(data.get('id') ?? '');
+		if (isSqliteSimulationMode()) {
+			if (!simulationDeleteEnrollment(id))
+				return fail(404, { error: '해당 학원에서 수강을 찾지 못했습니다.' });
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const id = String(data.get('id') ?? '');
 		if (!isOid(id)) return fail(400, { error: '잘못된 수강 ID입니다.' });
 		const invoiceLineRows = await InvoiceLine.find({ academyId, enrollmentId: id })
 			.select('_id')

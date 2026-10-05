@@ -7,12 +7,20 @@ import { Academy } from '$lib/server/models/academy';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import { ensurePlatformSuperAdmin } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationAcademiesData,
+	simulationCreateAcademy,
+	simulationUpdateAcademyFlags,
+	simulationUpdateAcademyStatus
+} from '$lib/simulation/sqlite';
 
 const MAX_ACADEMY_NAME = 120;
 
 export const load: PageServerLoad = async ({ locals }) => {
 	ensurePlatformSuperAdmin(locals);
 	const defaultAcademyIdHex = getDefaultAcademyId().toHexString();
+	if (isSqliteSimulationMode()) return simulationAcademiesData();
 
 	try {
 		await connectDB();
@@ -56,6 +64,10 @@ export const actions: Actions = {
 		if (!name || name.length > MAX_ACADEMY_NAME) {
 			return fail(400, { error: '학원 이름을 1~120자로 입력하세요.' });
 		}
+		if (isSqliteSimulationMode()) {
+			simulationCreateAcademy(name);
+			redirect(303, '/platform/academies');
+		}
 		await connectDB();
 		const doc = await Academy.create({ name, status: 'active' });
 		await AcademyMembership.create({
@@ -69,6 +81,15 @@ export const actions: Actions = {
 		ensurePlatformSuperAdmin(locals);
 		const fd = await request.formData();
 		const idRaw = fd.get('academyId')?.toString()?.trim();
+		if (isSqliteSimulationMode() && idRaw) {
+			if (idRaw === 'academy-demo') {
+				return fail(400, { error: '개발 기본 학원(DEV_ACADEMY_ID)은 비활성화할 수 없습니다.' });
+			}
+			if (!simulationUpdateAcademyStatus(idRaw, 'inactive')) {
+				return fail(404, { error: '학원을 찾을 수 없습니다.' });
+			}
+			redirect(303, '/platform/academies');
+		}
 		if (!idRaw || !isOidHex(idRaw)) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const id = new Types.ObjectId(idRaw);
 		if (id.equals(getDefaultAcademyId())) {
@@ -82,6 +103,19 @@ export const actions: Actions = {
 		ensurePlatformSuperAdmin(locals);
 		const fd = await request.formData();
 		const idRaw = fd.get('academyId')?.toString()?.trim();
+		if (isSqliteSimulationMode() && idRaw) {
+			if (
+				!simulationUpdateAcademyFlags(
+					idRaw,
+					fd.get('billingAutoImport') === 'on',
+					fd.get('parentPortalEnabled') === 'on',
+					fd.get('communicationsEnabled') === 'on'
+				)
+			) {
+				return fail(404, { error: '학원을 찾을 수 없습니다.' });
+			}
+			redirect(303, '/platform/academies');
+		}
 		if (!idRaw || !isOidHex(idRaw)) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const id = new Types.ObjectId(idRaw);
 		await connectDB();
@@ -101,6 +135,14 @@ export const actions: Actions = {
 		ensurePlatformSuperAdmin(locals);
 		const fd = await request.formData();
 		const idRaw = fd.get('academyId')?.toString()?.trim();
+		if (isSqliteSimulationMode() && idRaw) {
+			const academy = simulationAcademiesData().rows.find((r) => r.id === idRaw);
+			if (!academy) return fail(404, { error: '학원을 찾을 수 없습니다.' });
+			if (academy.status !== 'inactive')
+				return fail(400, { error: '비활성(inactive) 학원만 다시 활성화할 수 있습니다.' });
+			simulationUpdateAcademyStatus(idRaw, 'active');
+			redirect(303, '/platform/academies');
+		}
 		if (!idRaw || !isOidHex(idRaw)) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const id = new Types.ObjectId(idRaw);
 		await connectDB();

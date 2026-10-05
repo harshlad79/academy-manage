@@ -12,7 +12,15 @@ import {
 	isElevatedStaffRole
 } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
 import { Types } from 'mongoose';
+import {
+	simulationCreateMakeup,
+	simulationDeleteMakeup,
+	simulationMakeupData,
+	simulationCanAccessEnrollment,
+	simulationCanAccessCourse
+} from '$lib/simulation/sqlite';
 
 function isOid(id: string) {
 	return /^[a-f\d]{24}$/i.test(id);
@@ -55,6 +63,27 @@ async function enrollmentIdsForMakeupScope(
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const membership = ensureStaffAcademyMember(locals);
 	const courseFilterParam = url.searchParams.get('courseId')?.trim() ?? '';
+	if (isSqliteSimulationMode()) {
+		if (
+			!locals.user?.id ||
+			(membership.role === 'teacher' &&
+				courseFilterParam &&
+				!simulationCanAccessCourse(locals.user.id, courseFilterParam))
+		) {
+			return {
+				rows: [],
+				courses: [],
+				courseFilterId: courseFilterParam,
+				enrollmentOptions: [],
+				dbError: '접근 권한이 없습니다.'
+			};
+		}
+		const simulation = simulationMakeupData(courseFilterParam);
+		return {
+			...simulation,
+			dbError: null as string | null
+		};
+	}
 
 	try {
 		const { academyId } = await withAcademyScope();
@@ -186,6 +215,24 @@ async function loadCourseTeacherForEnrollment(
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		let academyId;
+		if (isSqliteSimulationMode()) {
+			const data = await request.formData();
+			const enrollmentId = String(data.get('enrollmentId') ?? '');
+			const sessionDate = String(data.get('sessionDate') ?? '').trim();
+			const sessionTime = String(data.get('sessionTime') ?? '').trim();
+			const description = String(data.get('description') ?? '').trim();
+			if (!enrollmentId) return fail(400, { error: '수강을 선택하세요.' });
+			if (!locals.user?.id || !simulationCanAccessEnrollment(locals.user.id, enrollmentId))
+				return fail(403, { error: '담당 수강만 처리할 수 있습니다.' });
+			if (!isYmdSeoulCalendarDate(sessionDate))
+				return fail(400, { error: '보강일(날짜)가 올바르지 않습니다.' });
+			if (!validOptionalTime(sessionTime))
+				return fail(400, { error: '시간은 HH:mm 형식이거나 비워 두세요.' });
+			if (!description) return fail(400, { error: '설명을 입력하세요.' });
+			if (!simulationCreateMakeup(enrollmentId, sessionDate, sessionTime, description))
+				return fail(400, { error: '선택한 수강이 없습니다.' });
+			return { success: true as const };
+		}
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
@@ -225,6 +272,12 @@ export const actions: Actions = {
 
 	delete: async ({ request, locals }) => {
 		let academyId;
+		if (isSqliteSimulationMode()) {
+			const id = String((await request.formData()).get('id') ?? '');
+			if (!locals.user?.id) return fail(401, { error: '로그인이 필요합니다.' });
+			if (!simulationDeleteMakeup(id)) return fail(404, { error: '보강 일정을 찾지 못했습니다.' });
+			return { success: true as const };
+		}
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {

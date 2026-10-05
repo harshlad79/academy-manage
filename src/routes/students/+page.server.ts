@@ -6,6 +6,12 @@ import { Student } from '$lib/server/models/student';
 import { escapeRegex } from '$lib/server/mongo-util';
 import { ensureDirectoryAccess, failFromGate, gateDirectoryAction } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationCreateStudent,
+	simulationDeleteStudent,
+	simulationStudents
+} from '$lib/simulation/sqlite';
 
 const MAX_NAME = 120;
 const MAX_GRADE = 40;
@@ -13,6 +19,13 @@ const MAX_GRADE = 40;
 export const load: PageServerLoad = async ({ url, locals }) => {
 	ensureDirectoryAccess(locals);
 	const q = url.searchParams.get('q')?.trim() ?? '';
+	if (isSqliteSimulationMode()) {
+		return {
+			students: simulationStudents('academy-demo', q),
+			q,
+			dbError: null as string | null
+		};
+	}
 	try {
 		const { academyId } = await withAcademyScope();
 		const filter: Record<string, unknown> = { academyId };
@@ -53,17 +66,21 @@ export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const rawName = String(data.get('name') ?? '');
+		const rawGrade = String(data.get('grade') ?? '');
+		const v = validateNameGrade(rawName, rawGrade);
+		if ('error' in v) return fail(400, { error: v.error });
+		if (isSqliteSimulationMode()) {
+			simulationCreateStudent(v.name, v.grade);
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const rawName = String(data.get('name') ?? '');
-		const rawGrade = String(data.get('grade') ?? '');
-		const v = validateNameGrade(rawName, rawGrade);
-		if ('error' in v) return fail(400, { error: v.error });
 		await Student.create({ academyId, name: v.name, grade: v.grade });
 		return { success: true as const };
 	},
@@ -71,14 +88,18 @@ export const actions: Actions = {
 	delete: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const id = String(data.get('id') ?? '');
+		if (isSqliteSimulationMode()) {
+			if (simulationDeleteStudent(id)) return { success: true as const };
+			return fail(400, { error: '등록된 수강이 있어 삭제할 수 없습니다.' });
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const id = String(data.get('id') ?? '');
 		if (!id.match(/^[a-f\d]{24}$/i)) return fail(400, { error: '잘못된 학생 ID입니다.' });
 		const enrolled = await Enrollment.countDocuments({ academyId, studentId: id });
 		if (enrolled > 0) {

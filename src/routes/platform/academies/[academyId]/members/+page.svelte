@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { enhance } from '$app/forms';
 	import type { PageData } from './$types';
 
 	type FormFlash = { error?: string };
@@ -73,6 +74,7 @@
 	<form
 		method="POST"
 		action="?/addMember"
+		use:enhance
 		class="mt-6 max-w-xl rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
 	>
 		<h2 class="text-sm font-semibold text-gray-900">멤버 추가</h2>
@@ -137,6 +139,7 @@
 	<form
 		method="POST"
 		action="?/createInvite"
+		use:enhance
 		class="mt-6 max-w-xl rounded-lg border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm"
 	>
 		<h2 class="text-sm font-semibold text-gray-900">멤버십 초대 (대기)</h2>

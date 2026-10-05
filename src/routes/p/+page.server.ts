@@ -13,6 +13,8 @@ import { academyAllowsCommunications } from '$lib/server/academy-flags';
 import { Announcement } from '$lib/server/models/announcement';
 import { isPopulatedIdName } from '$lib/server/mongo-populate-guards';
 import type { PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationPortalData } from '$lib/simulation/sqlite';
 
 function resolveAcademyDisplayName(): string {
 	const raw = env.PUBLIC_ACADEMY_DISPLAY_NAME?.trim();
@@ -47,6 +49,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.academyMembership?.role !== 'parent') {
 		error(403, '학부모 계정만 이 페이지를 볼 수 있습니다.');
 	}
+	if (isSqliteSimulationMode()) return simulationPortalData();
 
 	const uid = locals.user.id;
 

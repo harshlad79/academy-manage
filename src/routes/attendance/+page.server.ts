@@ -22,7 +22,13 @@ import {
 	gateAttendanceWriteAction
 } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
 import { Types } from 'mongoose';
+import {
+	simulationAttendanceData,
+	simulationCanAccessCourse,
+	simulationSaveAttendance
+} from '$lib/simulation/sqlite';
 
 function isOid(id: string) {
 	return /^[a-f\d]{24}$/i.test(id);
@@ -40,6 +46,34 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const dateParam = url.searchParams.get('date')?.trim() ?? '';
 	const sessionDate =
 		dateParam && isYmdSeoulCalendarDate(dateParam) ? dateParam : formatSeoulDateString();
+	if (isSqliteSimulationMode()) {
+		const userId = locals.user?.id;
+		const courses = simulationAttendanceData('', sessionDate).courses.filter(
+			(course) => userId && simulationCanAccessCourse(userId, course.id)
+		);
+		if (!userId || (courseId && !courses.some((course) => course.id === courseId))) {
+			return {
+				courses: [],
+				selectedCourseId: '',
+				sessionDate,
+				rows: [],
+				auditTrail: [],
+				dbError: '접근 권한이 없습니다.'
+			};
+		}
+		const selectedCourseId = courseId || courses[0]?.id || '';
+		const simulation = selectedCourseId
+			? simulationAttendanceData(selectedCourseId, sessionDate)
+			: { rows: [] };
+		return {
+			...simulation,
+			courses,
+			selectedCourseId,
+			sessionDate,
+			auditTrail: [],
+			dbError: null as string | null
+		};
+	}
 
 	try {
 		const { academyId } = await withAcademyScope();
@@ -195,6 +229,25 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 export const actions: Actions = {
 	save: async ({ request, locals }) => {
 		let academyId;
+		if (isSqliteSimulationMode()) {
+			const data = await request.formData();
+			const courseId = String(data.get('courseId') ?? '');
+			if (!locals.user?.id || !simulationCanAccessCourse(locals.user.id, courseId))
+				return fail(403, { error: '담당 클래스 출결만 처리할 수 있습니다.' });
+			const sessionDate = String(data.get('sessionDate') ?? '').trim();
+			if (!courseId) return fail(400, { error: '클래스를 선택하세요.' });
+			if (!isYmdSeoulCalendarDate(sessionDate))
+				return fail(400, { error: '날짜가 올바르지 않습니다.' });
+			const simulation = simulationAttendanceData(courseId, sessionDate);
+			const values = simulation.rows.map((row) => ({
+				enrollmentId: row.enrollmentId,
+				status: String(data.get(`status_${row.enrollmentId}`) ?? row.status),
+				reason: String(data.get(`reason_${row.enrollmentId}`) ?? '')
+			}));
+			if (!simulationSaveAttendance(courseId, sessionDate, values))
+				return fail(400, { error: '출결 대상을 찾을 수 없습니다.' });
+			return { success: true as const };
+		}
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {

@@ -4,15 +4,17 @@ import { MongoClient } from 'mongodb';
 import type { Session, User } from 'better-auth/types';
 import { env } from '$env/dynamic/private';
 import { buildSocialProviders } from '$lib/server/auth-social';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
 
 export function isMockAuthMode(): boolean {
-	return (env.AUTH_MODE ?? 'mock') === 'mock';
+	return isSqliteSimulationMode() || (env.AUTH_MODE ?? 'mock') === 'mock';
 }
 
 const MOCK_USER_PROFILES: Record<string, { name: string; email: string }> = {
 	superadmin: { name: '전체관리자(목업)', email: 'superadmin@example.com' },
 	testuser: { name: '테스트 사용자', email: 'test@example.com' },
-	'parent-kim': { name: '김 학부모', email: 'parent-kim@example.com' }
+	'parent-kim': { name: '김 학부모', email: 'parent-kim@example.com' },
+	'teacher-demo': { name: '시뮬레이션 강사', email: 'teacher@example.com' }
 };
 
 function resolveMockUserId(): string {

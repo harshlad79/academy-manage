@@ -3,12 +3,19 @@ import { withAcademyScope } from '$lib/server/academy-scope';
 import { Teacher } from '$lib/server/models/teacher';
 import { ensureDirectoryAccess, failFromGate, gateDirectoryAction } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationTeacher, simulationUpdateTeacher } from '$lib/simulation/sqlite';
 
 const MAX_NAME = 120;
 const MAX_SUBJECT = 80;
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	ensureDirectoryAccess(locals);
+	if (isSqliteSimulationMode()) {
+		const t = simulationTeacher(params.id ?? '');
+		if (!t) error(404, '강사를 찾을 수 없습니다.');
+		return { teacher: { id: t.id, name: t.name, subject: t.subject ?? '' } };
+	}
 	if (!params.id?.match(/^[a-f\d]{24}$/i)) error(404, '강사를 찾을 수 없습니다.');
 	try {
 		const { academyId } = await withAcademyScope();
@@ -41,6 +48,14 @@ export const actions: Actions = {
 	update: async ({ request, params, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const v = validate(String(data.get('name') ?? ''), String(data.get('subject') ?? ''));
+		if ('error' in v) return fail(400, { error: v.error });
+		if (isSqliteSimulationMode()) {
+			if (!simulationUpdateTeacher(params.id ?? '', v.name, v.subject))
+				return fail(404, { error: '해당 강사를 찾지 못했습니다.' });
+			redirect(303, '/teachers');
+		}
 		if (!params.id?.match(/^[a-f\d]{24}$/i)) return fail(400, { error: '잘못된 ID입니다.' });
 		let academyId;
 		try {
@@ -48,9 +63,6 @@ export const actions: Actions = {
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const v = validate(String(data.get('name') ?? ''), String(data.get('subject') ?? ''));
-		if ('error' in v) return fail(400, { error: v.error });
 		const result = await Teacher.updateOne(
 			{ _id: params.id, academyId },
 			{ $set: { name: v.name, subject: v.subject } }

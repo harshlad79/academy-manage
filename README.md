@@ -8,12 +8,13 @@ SvelteKit 5, Tailwind 4, TypeScript strict, MongoDB + Mongoose, Better Auth(mock
 
 ## 문서
 
-| 문서                                                                     | 용도                   |
-| ------------------------------------------------------------------------ | ---------------------- |
-| [docs/PRD.md](docs/PRD.md)                                               | 제품 요구·범위         |
-| [docs/session-handoff-and-status.md](docs/session-handoff-and-status.md) | 구현 스냅샷·재개 안내  |
-| [docs/session-context-digest.md](docs/session-context-digest.md)         | 신규 대화용 짧은 요약  |
-| [AGENTS.md](AGENTS.md)                                                   | 에이전트·Git·검증 순서 |
+| 문서                                                                     | 용도                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------ |
+| [docs/PRD.md](docs/PRD.md)                                               | 제품 요구·범위                             |
+| [docs/session-handoff-and-status.md](docs/session-handoff-and-status.md) | 구현 스냅샷·재개 안내                      |
+| [docs/session-context-digest.md](docs/session-context-digest.md)         | 신규 대화용 짧은 요약                      |
+| [docs/current-status.md](docs/current-status.md)                         | 현재 Simulith 검증 현황·GitHub 재개 라우팅 |
+| [AGENTS.md](AGENTS.md)                                                   | 에이전트·Git·검증 순서                     |
 
 ## 로컬 실행
 

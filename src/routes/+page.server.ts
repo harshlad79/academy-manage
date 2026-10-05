@@ -19,6 +19,8 @@ import { Student } from '$lib/server/models/student';
 import { Teacher } from '$lib/server/models/teacher';
 import type { Actions, PageServerLoad } from './$types';
 import type { AcademyRole } from '$lib/server/rbac';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationDashboard } from '$lib/simulation/sqlite';
 
 const emptyStats = {
 	studentCount: 0,
@@ -38,6 +40,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!isStaff) {
 		return emptyStats;
+	}
+	if (isSqliteSimulationMode()) {
+		return simulationDashboard('academy-demo');
 	}
 
 	try {

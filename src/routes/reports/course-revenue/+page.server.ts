@@ -6,6 +6,8 @@ import {
 } from '$lib/server/reports/course-revenue-aggregate';
 import { ensureStaffAcademyMember } from '$lib/server/rbac';
 import type { PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationCourseRevenueData, simulationUser } from '$lib/simulation/sqlite';
 
 export type { CourseRevenueRow };
 
@@ -20,6 +22,21 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const monthInvalid = Boolean(monthRaw && monthRaw.length > 0 && !range);
 	const bounds = range ?? seoulMonthRange(defaultMonth)!;
 	const { start, endExclusive } = bounds;
+	if (isSqliteSimulationMode()) {
+		const user = simulationUser(locals.user?.id ?? 'testuser');
+		const result = simulationCourseRevenueData(
+			monthParam,
+			user?.role ?? 'academy_admin',
+			user?.linkedTeacherId ?? null
+		);
+		return {
+			monthParam,
+			monthInvalid,
+			rows: result.rows,
+			dbError: null as string | null,
+			scopeWarning: result.scopeWarning
+		};
+	}
 
 	try {
 		const { academyId } = await withAcademyScope();

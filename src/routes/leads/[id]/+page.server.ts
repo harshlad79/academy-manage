@@ -11,6 +11,8 @@ import {
 	isElevatedStaffRole
 } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationLead, simulationUpdateLeadStatus } from '$lib/simulation/sqlite';
 
 function ensureLeadsPageAccess(locals: App.Locals): void {
 	const m = ensureStaffAcademyMember(locals);
@@ -33,6 +35,11 @@ function parseLeadStatus(raw: FormDataEntryValue | null): LeadStatus | null {
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	ensureLeadsPageAccess(locals);
+	if (isSqliteSimulationMode()) {
+		const lead = simulationLead(params.id ?? '');
+		if (!lead) error(404, '해당 학원에서 상담·대기 건을 찾지 못했습니다.');
+		return { statusOptions: [...LEAD_STATUSES], lead, dbError: null as string | null };
+	}
 
 	const leadId = parseObjectId(params.id);
 	if (!leadId) {
@@ -77,6 +84,14 @@ export const actions: Actions = {
 	updateStatus: async ({ locals, params, request }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const fd = await request.formData();
+		const status = parseLeadStatus(fd.get('status'));
+		if (isSqliteSimulationMode()) {
+			if (!status) return fail(400, { error: '잘못된 상태 값입니다.' });
+			if (!simulationUpdateLeadStatus(params.id ?? '', status))
+				return fail(404, { error: '상담 건을 찾지 못했습니다.' });
+			return { success: true as const };
+		}
 
 		const leadId = parseObjectId(params.id);
 		if (!leadId) {
@@ -90,8 +105,6 @@ export const actions: Actions = {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
 
-		const fd = await request.formData();
-		const status = parseLeadStatus(fd.get('status'));
 		if (!status) {
 			return fail(400, { error: '잘못된 상태 값입니다.' });
 		}

@@ -36,6 +36,13 @@ import { shouldSendParentNotifySms } from '$lib/server/parent-notify-sms';
 import { ensureFinanceAccess, failFromGate, gateFinanceAction } from '$lib/server/rbac';
 import mongoose, { type Types } from 'mongoose';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationCreateDeposit,
+	simulationCreateInvoice,
+	simulationMarkInvoicePaid,
+	simulationPaymentsData
+} from '$lib/simulation/sqlite';
 
 function paymentsRedirect(notice?: string): never {
 	const q = notice ? `?notice=${encodeURIComponent(notice)}` : '';
@@ -172,6 +179,28 @@ function findMatchingStubTransaction(
 export const load: PageServerLoad = async ({ url, locals }) => {
 	ensureFinanceAccess(locals);
 	const statusFilter = url.searchParams.get('status')?.trim() ?? '';
+	if (isSqliteSimulationMode()) {
+		const simulation = simulationPaymentsData(statusFilter);
+		return {
+			...simulation,
+			statusFilter,
+			defaultDueDate: formatSeoulDateString(),
+			dbError: null as string | null,
+			billingAutoImport: true,
+			autoMatchSuggestions: [],
+			openBankingPreview: {
+				enabled: false,
+				configured: false,
+				monthLabel: formatSeoulYearMonth(),
+				rows: []
+			},
+			notice: url.searchParams.get('notice'),
+			noticeMessage: parentNotifyNoticeMessage(url.searchParams.get('notice')),
+			parentNotifySmsEnabled: false,
+			parentNotifyEmailEnabled: false,
+			parentNotifyPushEnabled: false
+		};
+	}
 	try {
 		const { academyId } = await withAcademyScope();
 		const academyDoc = await Academy.findById(academyId).select('billingAutoImport').lean();
@@ -367,18 +396,24 @@ export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const rg = gateFinanceAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const enrollmentId = String(data.get('enrollmentId') ?? '');
+		const amount = parseAmount(String(data.get('amountKrw') ?? ''));
+		if (isSqliteSimulationMode()) {
+			if ('error' in amount) return fail(400, { error: amount.error });
+			if (!simulationCreateInvoice(enrollmentId, amount.value))
+				return fail(400, { error: '선택한 수강이 없습니다.' });
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const enrollmentId = String(data.get('enrollmentId') ?? '');
 		if (!isOid(enrollmentId)) return fail(400, { error: '수강을 선택하세요.' });
 		const ens = await Enrollment.exists({ _id: enrollmentId, academyId });
 		if (!ens) return fail(400, { error: '선택한 수강이 이 학원에 없습니다.' });
-		const amount = parseAmount(String(data.get('amountKrw') ?? ''));
 		if ('error' in amount) return fail(400, { error: amount.error });
 		let description = String(data.get('description') ?? '').trim();
 		if (!description) description = '수강료';
@@ -402,7 +437,16 @@ export const actions: Actions = {
 	markPaid: async ({ request, locals }) => {
 		const rg = gateFinanceAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const id = String(data.get('id') ?? '');
 		const uid = locals.user?.id;
+		if (isSqliteSimulationMode()) {
+			if (!uid) return fail(401, { error: '로그인이 필요합니다.' });
+			const result = simulationMarkInvoicePaid(id, uid);
+			if (result === 'missing') return fail(404, { error: '청구를 찾지 못했습니다.' });
+			if (result === 'paid') return fail(400, { error: '이미 처리된 청구입니다.' });
+			return { success: true as const };
+		}
 		if (!uid) return fail(401, { error: '로그인이 필요합니다.' });
 		let academyId;
 		try {
@@ -410,8 +454,6 @@ export const actions: Actions = {
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const id = String(data.get('id') ?? '');
 		if (!isOid(id)) return fail(400, { error: '잘못된 청구 ID입니다.' });
 		const paidAt = new Date();
 		const updated = await InvoiceLine.findOneAndUpdate(
@@ -465,13 +507,26 @@ export const actions: Actions = {
 	registerInboundDeposit: async ({ request, locals }) => {
 		const rg = gateFinanceAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		if (isSqliteSimulationMode()) {
+			const amount = parseAmount(String(data.get('amountKrw') ?? ''));
+			if ('error' in amount) return fail(400, { error: amount.error });
+			const depositedAt = String(data.get('depositedAt') ?? '').trim();
+			if (!isYmdSeoulCalendarDate(depositedAt))
+				return fail(400, { error: '입금일이 올바르지 않습니다.' });
+			simulationCreateDeposit(
+				amount.value,
+				`${depositedAt}T12:00:00+09:00`,
+				String(data.get('memo') ?? '').trim()
+			);
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
 		const amount = parseAmount(String(data.get('amountKrw') ?? ''));
 		if ('error' in amount) return fail(400, { error: amount.error });
 

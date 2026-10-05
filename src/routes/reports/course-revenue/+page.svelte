@@ -108,9 +108,12 @@
 		{/if}
 
 		<p class="mt-8 text-xs text-gray-500">
-			강사 계정은 본인 담당 클래스만 집계됩니다. 수납·청구 화면은
-			<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/payments')}>수납</a>에서
-			처리하세요.
+			강사 계정은 본인 담당 클래스만 집계됩니다.
+			{#if data.navLinks.some((link) => link.href === '/payments')}
+				수납·청구 화면은
+				<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/payments')}>수납</a>에서
+				처리하세요.
+			{/if}
 		</p>
 	{/if}
 </section>

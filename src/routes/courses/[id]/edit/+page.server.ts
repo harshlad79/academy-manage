@@ -4,6 +4,12 @@ import { Course } from '$lib/server/models/course';
 import { Teacher } from '$lib/server/models/teacher';
 import { ensureDirectoryAccess, failFromGate, gateDirectoryAction } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationCourse,
+	simulationTeachers,
+	simulationUpdateCourse
+} from '$lib/simulation/sqlite';
 
 const MAX_NAME = 120;
 
@@ -14,6 +20,14 @@ function teacherLabel(t: { name: string; subject?: string | null }): string {
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	ensureDirectoryAccess(locals);
+	if (isSqliteSimulationMode()) {
+		const c = simulationCourse(params.id ?? '');
+		if (!c) error(404, '클래스를 찾을 수 없습니다.');
+		return {
+			course: { id: c.id, name: c.name, teacherId: c.teacherId },
+			teachers: simulationTeachers().map((t) => ({ id: t.id, label: teacherLabel(t) }))
+		};
+	}
 	if (!params.id?.match(/^[a-f\d]{24}$/i)) error(404, '클래스를 찾을 수 없습니다.');
 	try {
 		const { academyId } = await withAcademyScope();
@@ -49,6 +63,16 @@ export const actions: Actions = {
 	update: async ({ request, params, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const data = await request.formData();
+		const v = validateCourseName(String(data.get('name') ?? ''));
+		if ('error' in v) return fail(400, { error: v.error });
+		const teacherId = String(data.get('teacherId') ?? '');
+		if (!teacherId) return fail(400, { error: '담당 강사를 선택하세요.' });
+		if (isSqliteSimulationMode()) {
+			if (!simulationUpdateCourse(params.id ?? '', v.name, teacherId))
+				return fail(400, { error: '선택한 강사가 없거나 클래스를 찾지 못했습니다.' });
+			redirect(303, '/courses');
+		}
 		if (!params.id?.match(/^[a-f\d]{24}$/i)) return fail(400, { error: '잘못된 ID입니다.' });
 		let academyId;
 		try {
@@ -56,10 +80,6 @@ export const actions: Actions = {
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const data = await request.formData();
-		const v = validateCourseName(String(data.get('name') ?? ''));
-		if ('error' in v) return fail(400, { error: v.error });
-		const teacherId = String(data.get('teacherId') ?? '');
 		if (!teacherId.match(/^[a-f\d]{24}$/i)) return fail(400, { error: '담당 강사를 선택하세요.' });
 		const owns = await Teacher.exists({ _id: teacherId, academyId });
 		if (!owns) return fail(400, { error: '선택한 강사가 이 학원에 없습니다.' });

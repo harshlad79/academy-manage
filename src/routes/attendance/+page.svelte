@@ -42,10 +42,13 @@
 
 		{#if data.courses.length === 0}
 			<p class="mt-6 text-sm text-gray-600">
-				등록된 클래스가 없습니다. <a
-					class="text-indigo-600 hover:text-indigo-800"
-					href={resolve('/courses')}>클래스 관리</a
-				>에서 먼저 추가하세요.
+				등록된 클래스가 없습니다.
+				{#if data.navLinks.some((link) => link.href === '/courses')}
+					<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/courses')}>클래스 관리</a
+					>에서 먼저 추가하세요.
+				{:else}
+					담당 클래스 연결은 관리자에게 문의하세요.
+				{/if}
 			</p>
 		{:else}
 			<form method="GET" class="mt-6 flex flex-wrap items-end gap-4">
@@ -82,12 +85,20 @@
 			{#if data.rows.length === 0}
 				<p class="mt-6 text-sm text-gray-600">
 					이 클래스에 수강 등록된 학생이 없습니다.
-					<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/enrollments')}
-						>수강 관리</a
-					>에서 연결하세요.
+					{#if data.navLinks.some((link) => link.href === '/enrollments')}
+						<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/enrollments')}
+							>수강 관리</a
+						>에서 연결하세요.
+					{:else}
+						수강 연결은 관리자에게 문의하세요.
+					{/if}
 				</p>
 			{:else}
-				<form method="POST" action="?/save" class="mt-6 space-y-4">
+				<form
+					method="POST"
+					action={`?/save&courseId=${encodeURIComponent(data.selectedCourseId)}&date=${data.sessionDate}`}
+					class="mt-6 space-y-4"
+				>
 					<input type="hidden" name="courseId" value={data.selectedCourseId} />
 					<input type="hidden" name="sessionDate" value={data.sessionDate} />
 

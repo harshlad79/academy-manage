@@ -12,6 +12,13 @@ import {
 	isElevatedStaffRole
 } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationConvertLead,
+	simulationCreateLead,
+	simulationLeads,
+	simulationUpdateLeadStatus
+} from '$lib/simulation/sqlite';
 
 const MAX_NAME = 120;
 const MAX_MEMO = 500;
@@ -60,6 +67,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const statusRaw = url.searchParams.get('status')?.trim() ?? '';
 	const statusFilter =
 		statusRaw && LEAD_STATUSES.includes(statusRaw as LeadStatus) ? (statusRaw as LeadStatus) : null;
+	if (isSqliteSimulationMode()) {
+		return {
+			statusFilter,
+			statusOptions: [...LEAD_STATUSES],
+			academyIdHex: '507f1f77bcf86cd799439011',
+			applyUrl: `${url.origin}/apply?a=academy-demo`,
+			leads: simulationLeads(statusFilter ?? ''),
+			dbError: null as string | null
+		};
+	}
 
 	try {
 		const { academyId } = await withAcademyScope();
@@ -118,6 +135,15 @@ export const actions: Actions = {
 	updateStatus: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const fd = await request.formData();
+		const status = parseLeadStatus(fd.get('status'));
+		const leadIdRaw = fd.get('leadId')?.toString()?.trim() ?? '';
+		if (isSqliteSimulationMode()) {
+			if (!status) return fail(400, { error: '잘못된 상태 값입니다.' });
+			if (!simulationUpdateLeadStatus(leadIdRaw, status))
+				return fail(404, { error: '상담 건을 찾지 못했습니다.' });
+			return { success: true as const };
+		}
 
 		let academyId: Types.ObjectId;
 		try {
@@ -126,9 +152,7 @@ export const actions: Actions = {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
 
-		const fd = await request.formData();
 		const leadId = parseLeadId(fd.get('leadId'));
-		const status = parseLeadStatus(fd.get('status'));
 		if (!leadId) return fail(400, { error: '잘못된 상담·대기 ID입니다.' });
 		if (!status) return fail(400, { error: '잘못된 상태 값입니다.' });
 
@@ -153,6 +177,18 @@ export const actions: Actions = {
 	createStaffLead: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const fd = await request.formData();
+		const v = validateStaffLeadFields(
+			String(fd.get('studentName') ?? ''),
+			String(fd.get('guardianName') ?? ''),
+			String(fd.get('phone') ?? ''),
+			String(fd.get('memo') ?? '')
+		);
+		if ('error' in v) return fail(400, { error: v.error });
+		if (isSqliteSimulationMode()) {
+			simulationCreateLead(v.studentName, v.guardianName, v.phone, v.memo ?? '');
+			return { success: true as const };
+		}
 
 		const userId = locals.user?.id;
 		if (!userId) return fail(401, { error: '로그인이 필요합니다.' });
@@ -163,15 +199,6 @@ export const actions: Actions = {
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-
-		const fd = await request.formData();
-		const v = validateStaffLeadFields(
-			String(fd.get('studentName') ?? ''),
-			String(fd.get('guardianName') ?? ''),
-			String(fd.get('phone') ?? ''),
-			String(fd.get('memo') ?? '')
-		);
-		if ('error' in v) return fail(400, { error: v.error });
 
 		await Lead.create({
 			academyId,
@@ -189,6 +216,14 @@ export const actions: Actions = {
 	convertLead: async ({ request, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const fd = await request.formData();
+		const leadIdRaw = fd.get('leadId')?.toString()?.trim() ?? '';
+		if (isSqliteSimulationMode()) {
+			const studentId = simulationConvertLead(leadIdRaw);
+			if (!studentId) return fail(404, { error: '상담 건을 찾지 못했습니다.' });
+			return { success: true as const, studentId };
+		}
+		const leadId = parseLeadId(fd.get('leadId'));
 
 		let academyId: Types.ObjectId;
 		try {
@@ -197,8 +232,6 @@ export const actions: Actions = {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
 
-		const fd = await request.formData();
-		const leadId = parseLeadId(fd.get('leadId'));
 		if (!leadId) return fail(400, { error: '잘못된 상담·대기 ID입니다.' });
 
 		try {

@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { Types } from 'mongoose';
 import { isOidHex } from '$lib/server/active-academy';
 import { isMockAuthMode, liveBetterAuthUserExists } from '$lib/server/auth';
@@ -16,9 +16,33 @@ import {
 	resendAcademyInvite
 } from '$lib/server/academy-members-invite';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationAcademyMembersData, simulationMutateMember } from '$lib/simulation/sqlite';
+
+async function mutateSimulationMember(
+	request: Request,
+	academyId: string,
+	action: 'add' | 'remove' | 'link'
+) {
+	const fd = await request.formData();
+	const message = simulationMutateMember(
+		academyId,
+		action,
+		fd.get('userId')?.toString().trim() ?? '',
+		fd.get('role')?.toString().trim() ?? '',
+		fd.get('linkedTeacherId')?.toString().trim() ?? ''
+	);
+	if (message) return fail(400, { error: message });
+	redirect(303, `/platform/academies/${academyId}/members`);
+}
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	ensurePlatformSuperAdmin(locals);
+	if (isSqliteSimulationMode()) {
+		const data = simulationAcademyMembersData(params.academyId);
+		if (!data) error(404, '학원을 찾을 수 없습니다.');
+		return data;
+	}
 	const academyId = parseAcademyIdParam(params.academyId);
 	if (!academyId) redirect(303, '/platform/academies');
 	return loadMembersPageData(academyId, url);
@@ -27,6 +51,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 export const actions: Actions = {
 	addMember: async ({ request, locals, params }) => {
 		ensurePlatformSuperAdmin(locals);
+		if (isSqliteSimulationMode()) return mutateSimulationMember(request, params.academyId, 'add');
 		const academyId = parseAcademyIdParam(params.academyId);
 		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const fd = await request.formData();
@@ -71,6 +96,7 @@ export const actions: Actions = {
 	},
 	updateLinkedTeacher: async ({ request, locals, params }) => {
 		ensurePlatformSuperAdmin(locals);
+		if (isSqliteSimulationMode()) return mutateSimulationMember(request, params.academyId, 'link');
 		const academyId = parseAcademyIdParam(params.academyId);
 		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const fd = await request.formData();
@@ -102,6 +128,8 @@ export const actions: Actions = {
 	},
 	removeMember: async ({ request, locals, params }) => {
 		ensurePlatformSuperAdmin(locals);
+		if (isSqliteSimulationMode())
+			return mutateSimulationMember(request, params.academyId, 'remove');
 		const academyId = parseAcademyIdParam(params.academyId);
 		if (!academyId) return fail(400, { error: '잘못된 학원 ID입니다.' });
 		const fd = await request.formData();

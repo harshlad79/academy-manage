@@ -6,6 +6,8 @@ import { Academy } from '$lib/server/models/academy';
 import type { AcademyStatus } from '$lib/server/models/academy';
 import { AcademyMembership } from '$lib/server/models/academy-membership';
 import type { AcademyMembershipLocals, AcademyRole } from '$lib/server/rbac';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationUser } from '$lib/simulation/sqlite';
 
 export type AcademyOperationalStatus = 'active' | 'inactive' | 'trial_locked';
 
@@ -133,6 +135,18 @@ export async function resolveActiveAcademyContext(
 	userId: string,
 	cookieAcademyIdHex: string | undefined
 ): Promise<ResolvedAcademyContext | null> {
+	if (isSqliteSimulationMode()) {
+		const user = simulationUser(userId);
+		if (!user) return null;
+		return {
+			academyId: new Types.ObjectId('507f1f77bcf86cd799439011'),
+			membership: {
+				role: user.role,
+				linkedTeacherId: user.linkedTeacherId
+			},
+			academyOperationalStatus: 'active'
+		};
+	}
 	await connectDB();
 	const defaultId = getDefaultAcademyId();
 	const cookieTrim = cookieAcademyIdHex?.trim();

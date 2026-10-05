@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { buildAcademySwitcherData, type AcademySwitcherData } from '$lib/server/active-academy';
 import { navLinksForRole } from '$lib/server/rbac';
 import type { LayoutServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
 
 export type { AcademySwitcherData };
 
@@ -21,6 +22,7 @@ function isTrialExpiredRedirectExcluded(path: string): boolean {
 
 async function loadAcademySwitcher(locals: App.Locals): Promise<AcademySwitcherData | null> {
 	if (!locals.user || !locals.activeAcademyId) return null;
+	if (isSqliteSimulationMode()) return null;
 	return buildAcademySwitcherData({
 		userId: locals.user.id,
 		activeAcademyId: locals.activeAcademyId,

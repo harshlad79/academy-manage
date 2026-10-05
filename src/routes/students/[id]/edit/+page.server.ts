@@ -21,6 +21,8 @@ import {
 import { dispatchInviteSms, inviteSmsNoticeMessage } from '$lib/server/invite-sms';
 import { ensureDirectoryAccess, failFromGate, gateDirectoryAction } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationStudent, simulationUpdateStudent } from '$lib/simulation/sqlite';
 
 const MAX_NAME = 120;
 const MAX_GRADE = 40;
@@ -39,6 +41,25 @@ function editRedirect(studentId: string, notice: string): never {
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	ensureDirectoryAccess(locals);
+	if (isSqliteSimulationMode()) {
+		const s = simulationStudent(params.id ?? '');
+		if (!s) error(404, '학생을 찾을 수 없습니다.');
+		return {
+			student: {
+				id: s.id,
+				name: s.name,
+				grade: s.grade ?? '',
+				guardianName: s.guardianName ?? '',
+				guardianPhone: s.guardianPhone ?? ''
+			},
+			linkedParents: [],
+			candidateParents: [],
+			pendingParentInvite: null,
+			academyName: '시뮬레이션 학원',
+			inviteAcceptOrigin: url.origin,
+			noticeMessage: null
+		};
+	}
 	if (!params.id || !isOid(params.id)) error(404, '학생을 찾을 수 없습니다.');
 	try {
 		const { academyId } = await withAcademyScope();
@@ -167,13 +188,6 @@ export const actions: Actions = {
 	update: async ({ request, params, locals }) => {
 		const rg = gateDirectoryAction(locals);
 		if (!rg.ok) return failFromGate(rg);
-		if (!params.id || !isOid(params.id)) return fail(400, { error: '잘못된 ID입니다.' });
-		let academyId;
-		try {
-			({ academyId } = await withAcademyScope());
-		} catch {
-			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
-		}
 		const data = await request.formData();
 		const v = validate(
 			String(data.get('name') ?? ''),
@@ -181,7 +195,28 @@ export const actions: Actions = {
 			String(data.get('guardianName') ?? ''),
 			String(data.get('guardianPhone') ?? '')
 		);
-		if ('error' in v) return fail(400, { error: v.error });
+		if ('error' in v)
+			return fail(400, {
+				error: v.error,
+				name: String(data.get('name') ?? ''),
+				grade: String(data.get('grade') ?? ''),
+				guardianName: String(data.get('guardianName') ?? ''),
+				guardianPhone: String(data.get('guardianPhone') ?? '')
+			});
+		if (isSqliteSimulationMode()) {
+			if (
+				!simulationUpdateStudent(params.id ?? '', v.name, v.grade, v.guardianName, v.guardianPhone)
+			)
+				return fail(404, { error: '해당 학생을 찾지 못했습니다.' });
+			redirect(303, '/students');
+		}
+		if (!params.id || !isOid(params.id)) return fail(400, { error: '잘못된 ID입니다.' });
+		let academyId;
+		try {
+			({ academyId } = await withAcademyScope());
+		} catch {
+			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
+		}
 		const result = await Student.updateOne(
 			{ _id: params.id, academyId },
 			{

@@ -6,6 +6,8 @@ import {
 } from '$lib/server/reports/course-revenue-aggregate';
 import { ensureStaffAcademyMember } from '$lib/server/rbac';
 import type { RequestHandler } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationCourseRevenueData, simulationUser } from '$lib/simulation/sqlite';
 
 function escapeCsvCell(value: string | number): string {
 	const s = String(value);
@@ -54,14 +56,23 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	let rows: CourseRevenueRow[];
 	try {
-		const { academyId } = await withAcademyScope();
-		const result = await computeCourseRevenueRows({
-			academyId,
-			membership: m,
-			start,
-			endExclusive
-		});
-		rows = result.rows;
+		if (isSqliteSimulationMode()) {
+			const user = simulationUser(locals.user?.id ?? 'testuser');
+			rows = simulationCourseRevenueData(
+				monthForFile,
+				user?.role ?? 'academy_admin',
+				user?.linkedTeacherId ?? null
+			).rows as CourseRevenueRow[];
+		} else {
+			const { academyId } = await withAcademyScope();
+			const result = await computeCourseRevenueRows({
+				academyId,
+				membership: m,
+				start,
+				endExclusive
+			});
+			rows = result.rows;
+		}
 	} catch (err) {
 		console.error('[course-revenue export]', err);
 		return new Response('데이터를 불러오지 못했습니다.', {

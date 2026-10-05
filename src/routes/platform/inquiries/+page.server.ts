@@ -20,6 +20,8 @@ import {
 } from '$lib/server/platform-inquiry-approve';
 import { ensurePlatformSuperAdmin } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationInquiriesData } from '$lib/simulation/sqlite';
 
 const INQUIRY_STATUSES: AcademyInquiryStatus[] = [
 	'new',
@@ -82,6 +84,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		statusRaw && INQUIRY_STATUSES.includes(statusRaw as AcademyInquiryStatus)
 			? (statusRaw as AcademyInquiryStatus)
 			: null;
+	if (isSqliteSimulationMode()) return simulationInquiriesData(statusFilter);
 
 	await connectDB();
 

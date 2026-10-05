@@ -17,10 +17,13 @@
 <section class="max-w-2xl">
 	<h1 class="text-2xl font-semibold text-gray-900">소통 · 공지</h1>
 	<p class="mt-2 text-sm text-gray-600">
-		학부모 상담·대기 큐는 <a
-			class="font-medium text-indigo-600 hover:text-indigo-800"
-			href={resolve('/leads')}>상담·대기</a
-		>에서 관리합니다. 공지는 작성 즉시 학부모 포털 <code class="font-mono text-xs">/p</code> 에 게시됩니다.
+		{#if data.navLinks.some((link) => link.href === '/leads')}
+			학부모 상담·대기 큐는 <a
+				class="font-medium text-indigo-600 hover:text-indigo-800"
+				href={resolve('/leads')}>상담·대기</a
+			>에서 관리합니다.
+		{/if}
+		공지는 작성 즉시 학부모 포털 <code class="font-mono text-xs">/p</code> 에 게시됩니다.
 	</p>
 
 	{#if form?.error}
@@ -44,20 +47,22 @@
 		</p>
 	{:else}
 		<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			<a
-				href={resolve('/leads')}
-				class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm transition hover:border-indigo-300"
-			>
-				<h2 class="text-sm font-medium text-indigo-900">상담·대기 (Lead)</h2>
-				<p class="mt-2 text-3xl font-semibold tracking-tight text-indigo-950 tabular-nums">
-					{(data.leadNewCount + data.leadWaitlistedCount).toLocaleString('ko-KR')}
-				</p>
-				<p class="mt-2 text-xs text-indigo-800/90">
-					신규 {data.leadNewCount.toLocaleString('ko-KR')} · 대기
-					{data.leadWaitlistedCount.toLocaleString('ko-KR')} · 전환
-					{data.leadConvertedCount.toLocaleString('ko-KR')}
-				</p>
-			</a>
+			{#if data.navLinks.some((link) => link.href === '/leads')}
+				<a
+					href={resolve('/leads')}
+					class="rounded-lg border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm transition hover:border-indigo-300"
+				>
+					<h2 class="text-sm font-medium text-indigo-900">상담·대기 (Lead)</h2>
+					<p class="mt-2 text-3xl font-semibold tracking-tight text-indigo-950 tabular-nums">
+						{(data.leadNewCount + data.leadWaitlistedCount).toLocaleString('ko-KR')}
+					</p>
+					<p class="mt-2 text-xs text-indigo-800/90">
+						신규 {data.leadNewCount.toLocaleString('ko-KR')} · 대기
+						{data.leadWaitlistedCount.toLocaleString('ko-KR')} · 전환
+						{data.leadConvertedCount.toLocaleString('ko-KR')}
+					</p>
+				</a>
+			{/if}
 			<div
 				class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
 				aria-labelledby="communications-parent-link-stat-heading"

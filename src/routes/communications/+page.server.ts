@@ -18,6 +18,12 @@ import {
 	isElevatedStaffRole
 } from '$lib/server/rbac';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import {
+	simulationAnnouncements,
+	simulationCreateAnnouncement,
+	simulationDeleteAnnouncement
+} from '$lib/simulation/sqlite';
 
 const ANNOUNCEMENTS_LIMIT = 20;
 
@@ -44,6 +50,20 @@ const empty = {
 
 export const load: PageServerLoad = async ({ locals }) => {
 	ensureStaffAcademyMember(locals);
+	if (isSqliteSimulationMode()) {
+		return {
+			communicationsEnabled: true,
+			canManageCommunications: isElevatedStaffRole(locals.academyMembership!.role),
+			parentStudentLinkCount: 0,
+			parentMembershipCount: 1,
+			studentCount: 2,
+			leadNewCount: 0,
+			leadWaitlistedCount: 0,
+			leadConvertedCount: 0,
+			announcements: simulationAnnouncements(),
+			dbError: null as string | null
+		};
+	}
 	try {
 		const { academyId } = await withAcademyScope();
 		const academyDoc = await Academy.findById(academyId).select('communicationsEnabled').lean();
@@ -105,15 +125,23 @@ export const actions: Actions = {
 		if (!rg.ok) return failFromGate(rg);
 		const uid = locals.user?.id;
 		if (!uid) return fail(401, { error: '로그인이 필요합니다.' });
+		const fd = await request.formData();
+		const title = fd.get('title')?.toString()?.trim() ?? '';
+		const body = fd.get('body')?.toString()?.trim() ?? '';
+		if (!title || title.length > ANNOUNCEMENT_TITLE_MAX)
+			return fail(400, { error: `제목은 1~${ANNOUNCEMENT_TITLE_MAX}자로 입력하세요.` });
+		if (!body || body.length > ANNOUNCEMENT_BODY_MAX)
+			return fail(400, { error: `내용은 1~${ANNOUNCEMENT_BODY_MAX}자로 입력하세요.` });
+		if (isSqliteSimulationMode()) {
+			simulationCreateAnnouncement(title, body, uid);
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const fd = await request.formData();
-		const title = fd.get('title')?.toString()?.trim() ?? '';
-		const body = fd.get('body')?.toString()?.trim() ?? '';
 		if (!title || title.length > ANNOUNCEMENT_TITLE_MAX) {
 			return fail(400, { error: `제목은 1~${ANNOUNCEMENT_TITLE_MAX}자로 입력하세요.` });
 		}
@@ -127,14 +155,18 @@ export const actions: Actions = {
 	deleteAnnouncement: async ({ request, locals }) => {
 		const rg = gateCommunicationsAction(locals);
 		if (!rg.ok) return failFromGate(rg);
+		const fd = await request.formData();
+		const id = fd.get('id')?.toString()?.trim() ?? '';
+		if (isSqliteSimulationMode()) {
+			if (!simulationDeleteAnnouncement(id)) return fail(404, { error: '공지를 찾지 못했습니다.' });
+			return { success: true as const };
+		}
 		let academyId;
 		try {
 			({ academyId } = await withAcademyScope());
 		} catch {
 			return fail(503, { error: 'DB에 연결할 수 없습니다.' });
 		}
-		const fd = await request.formData();
-		const id = fd.get('id')?.toString()?.trim() ?? '';
 		if (!/^[a-f\d]{24}$/i.test(id)) return fail(400, { error: '잘못된 공지 ID입니다.' });
 		const result = await Announcement.deleteOne({ _id: id, academyId });
 		if (result.deletedCount === 0) return fail(404, { error: '공지를 찾지 못했습니다.' });

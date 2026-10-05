@@ -7,6 +7,8 @@ import { Academy } from '$lib/server/models/academy';
 import { normalizeInvitePhone } from '$lib/server/models/academy-invite';
 import { Lead } from '$lib/server/models/lead';
 import type { Actions, PageServerLoad } from './$types';
+import { isSqliteSimulationMode } from '$lib/server/simulation-mode';
+import { simulationCreateLead } from '$lib/simulation/sqlite';
 
 export type ApplyFormValues = {
 	studentName: string;
@@ -72,6 +74,9 @@ function validateApplyInput(values: ApplyFormValues):
 
 export const load: PageServerLoad = async ({ url }) => {
 	const academyIdHex = url.searchParams.get('a')?.trim() ?? '';
+	if (process.env.SIMULATION_MODE === 'sqlite') {
+		return { academyId: academyIdHex || 'academy-demo', academyName: '시뮬레이션 학원' };
+	}
 	const academy = await findApplyAcademy(academyIdHex);
 	if (!academy) error(404, '학원을 찾을 수 없습니다.');
 	return academy;
@@ -82,6 +87,18 @@ export const actions: Actions = {
 		const fd = await request.formData();
 		const academyIdHex = formStr(fd, 'academyId');
 		const values = readFormValues(fd);
+		if (isSqliteSimulationMode()) {
+			const validated = validateApplyInput(values);
+			if (!validated.ok)
+				return fail(400, { error: validated.error, values, academyId: academyIdHex });
+			simulationCreateLead(
+				validated.fields.studentName,
+				validated.fields.guardianName,
+				validated.fields.phone,
+				validated.fields.memo ?? ''
+			);
+			redirect(303, '/apply/success');
+		}
 
 		const academy = await findApplyAcademy(academyIdHex);
 		if (!academy) {

@@ -29,3 +29,11 @@ vite.config.ts.timestamp-*
 .pi/gsd/
 .pi/teams/
 .pi/taskplane.json
+.omx-state-locks/
+.omx-state-locks.identity.json
+
+# Local Codex/OMX/ZCode runtime state
+.codex/
+.omx/
+.zcode/
+.simulation/

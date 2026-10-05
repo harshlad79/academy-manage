@@ -62,9 +62,14 @@
 
 		{#if data.enrollmentOptions.length === 0}
 			<p class="mt-6 text-sm text-gray-600">
-				보강을 등록할 수강이 없습니다. 권한·수강 연결을 확인하거나
-				<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/enrollments')}>수강 관리</a
-				>에서 등록하세요.
+				보강을 등록할 수강이 없습니다.
+				{#if data.navLinks.some((link) => link.href === '/enrollments')}
+					<a class="text-indigo-600 hover:text-indigo-800" href={resolve('/enrollments')}
+						>수강 관리</a
+					>에서 등록하세요.
+				{:else}
+					권한·수강 연결은 관리자에게 문의하세요.
+				{/if}
 			</p>
 		{:else}
 			<form method="POST" action="?/create" class="mt-8 space-y-4" use:enhance>
